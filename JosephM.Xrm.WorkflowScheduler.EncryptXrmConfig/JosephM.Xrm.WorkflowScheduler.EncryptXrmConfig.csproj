@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{EEED9F66-183F-41EA-A07C-14A17C05811F}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>JosephM.Xrm.WorkflowScheduler.EncryptXrmConfig</RootNamespace>
+    <AssemblyName>JosephM.Xrm.WorkflowScheduler.EncryptXrmConfig</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="JosephM.Core">
+      <HintPath>..\Lib\JosephM.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="JosephM.ObjectEncryption">
+      <HintPath>..\Lib\JosephM.ObjectEncryption.dll</HintPath>
+    </Reference>
+    <Reference Include="JosephM.ObjectMapping">
+      <HintPath>..\Lib\JosephM.ObjectMapping.dll</HintPath>
+    </Reference>
+    <Reference Include="JosephM.Prism.Infrastructure">
+      <HintPath>..\Lib\JosephM.Prism.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="JosephM.Record">
+      <HintPath>..\Lib\JosephM.Record.dll</HintPath>
+    </Reference>
+    <Reference Include="JosephM.Record.Application">
+      <HintPath>..\Lib\JosephM.Record.Application.dll</HintPath>
+    </Reference>
+    <Reference Include="JosephM.Wpf">
+      <HintPath>..\Lib\JosephM.Wpf.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Prism">
+      <HintPath>..\Lib\Microsoft.Practices.Prism.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Prism.UnityExtensions">
+      <HintPath>..\Lib\Microsoft.Practices.Prism.UnityExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.ServiceLocation">
+      <HintPath>..\Lib\Microsoft.Practices.ServiceLocation.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Practices.Unity">
+      <HintPath>..\Lib\Microsoft.Practices.Unity.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Module\EncryptXrmConfigurationDialog.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <AppDesigner Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\JosephM.Xrm.WorkflowScheduler.Test\JosephM.Xrm.WorkflowScheduler.Test.csproj">
+      <Project>{D2DD2587-B577-487B-BF48-6B364D9958BD}</Project>
+      <Name>JosephM.Xrm.WorkflowScheduler.Test</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\JosephM.Xrm.WorkflowScheduler\JosephM.Xrm.WorkflowScheduler.csproj">
+      <Project>{C1680534-FA12-4C76-A7A4-4F1843D7DCC2}</Project>
+      <Name>JosephM.Xrm.WorkflowScheduler</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Lib\JosephM.Core.dll" />
+    <Content Include="Lib\JosephM.Core.pdb" />
+    <Content Include="Lib\JosephM.ObjectEncryption.dll" />
+    <Content Include="Lib\JosephM.ObjectEncryption.pdb" />
+    <Content Include="Lib\JosephM.ObjectMapping.dll" />
+    <Content Include="Lib\JosephM.ObjectMapping.pdb" />
+    <Content Include="Lib\JosephM.Prism.Infrastructure.dll" />
+    <Content Include="Lib\JosephM.Prism.Infrastructure.pdb" />
+    <Content Include="Lib\JosephM.Record.Application.dll" />
+    <Content Include="Lib\JosephM.Record.Application.pdb" />
+    <Content Include="Lib\JosephM.Record.dll" />
+    <Content Include="Lib\JosephM.Record.pdb" />
+    <Content Include="Lib\JosephM.Wpf.dll" />
+    <Content Include="Lib\JosephM.Wpf.pdb" />
+    <Content Include="Lib\Microsoft.Practices.Prism.dll" />
+    <Content Include="Lib\Microsoft.Practices.Prism.UnityExtensions.dll" />
+    <Content Include="Lib\Microsoft.Practices.ServiceLocation.dll" />
+    <Content Include="Lib\Microsoft.Practices.Unity.dll" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
