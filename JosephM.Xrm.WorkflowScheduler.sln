@@ -7,6 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		Solution Items\Customisations.xls = Solution Items\Customisations.xls
 		Solution Items\JosephMcGregorWorkflowScheduler_1_0_0_0.zip = Solution Items\JosephMcGregorWorkflowScheduler_1_0_0_0.zip
+		Solution Items\TestComponents_1_0_0_0.zip = Solution Items\TestComponents_1_0_0_0.zip
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler", "JosephM.Xrm.WorkflowScheduler\JosephM.Xrm.WorkflowScheduler.csproj", "{C1680534-FA12-4C76-A7A4-4F1843D7DCC2}"
@@ -16,6 +17,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler.EncryptXrmConfig", "JosephM.Xrm.WorkflowScheduler.EncryptXrmConfig\JosephM.Xrm.WorkflowScheduler.EncryptXrmConfig.csproj", "{EEED9F66-183F-41EA-A07C-14A17C05811F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler.WebResources", "JosephM.Xrm.WorkflowScheduler.WebResources\JosephM.Xrm.WorkflowScheduler.WebResources.csproj", "{FF7409D8-1099-4DBF-BA54-F54D6BFD87C3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Read Me", "Read Me", "{E906366B-74E6-494C-B31E-A4B175C9387B}"
+	ProjectSection(SolutionItems) = preProject
+		Read Me\Configuring Test Script.docx = Read Me\Configuring Test Script.docx
+		Read Me\Solution Details.docx = Read Me\Solution Details.docx
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
