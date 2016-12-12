@@ -6,12 +6,254 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Schema;
+using JosephM.Xrm.WorkflowScheduler.Workflows;
+using System.Threading;
 
 namespace JosephM.Xrm.WorkflowScheduler.Test
 {
     [TestClass]
     public class WorkflowTaskTests : JosephMXrmTest
     {
+        /// <summary>
+        /// Verifies continuous workflow not started, started or killed for change of On value
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskTurnOffIfDeactivatedTest()
+        {
+            var workflowTask = InitialiseValidWorkflowTask();
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
+            workflowTask = CreateAndRetrieve(workflowTask);
+
+            Assert.IsTrue(workflowTask.GetBoolean(Fields.jmcg_workflowtask_.jmcg_on));
+            Assert.IsTrue(WorkflowSchedulerService.GetRecurringInstances(workflowTask.Id).Any());
+
+            XrmService.Deactivate(workflowTask);
+            workflowTask = Refresh(workflowTask);
+            Assert.IsFalse(workflowTask.GetBoolean(Fields.jmcg_workflowtask_.jmcg_on));
+            Assert.IsFalse(WorkflowSchedulerService.GetRecurringInstances(workflowTask.Id).Any());
+        }
+
+        /// <summary>
+        /// Verifies continuous workflow not started, started or killed for change of On value
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskMonitorTurnOnTest()
+        {
+            var workflowTask = InitialiseValidWorkflowTask();
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, GetTargetAccountWorkflow());
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, true);
+            try
+            {
+                workflowTask = CreateAndRetrieve(workflowTask);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, false);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures, true);
+            try
+            {
+                workflowTask = CreateAndRetrieve(workflowTask);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            try
+            {
+                workflowTask = CreateAndRetrieve(workflowTask);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, true);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TestQueue);
+            workflowTask = CreateAndRetrieve(workflowTask);
+            Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime));
+            Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime));
+
+            //okay need to set conditions for the target having not executed
+            WaitTillTrue(() => WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any(), 60);
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_on, false);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_on);
+            Assert.IsFalse(WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any());
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_on);
+            Assert.IsTrue(WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any());
+        }
+
+        /// <summary>
+        /// Verifies a notification generated for schedule workflow failures
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskMonitorScheduleTest()
+        {
+            DeleteAll(Entities.account);
+
+            var workflowName = "Test Account Target Schedule Failure";
+
+            DeleteWorkflowTasks(workflowName);
+
+            var account = CreateAccount();
+
+            var scheduleFailWorkflow = GetWorkflow(workflowName);
+
+            var initialThreshold = DateTime.UtcNow.AddDays(-3);
+
+            var workflowTask = InitialiseValidWorkflowTask();
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, scheduleFailWorkflow);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddDays(-2));
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_name, workflowName);
+            workflowTask = CreateAndRetrieve(workflowTask);
+
+            WaitTillTrue(() => WorkflowSchedulerService.GetRecurringInstancesFailed(workflowTask.Id).Any(), 60);
+
+            var now = DateTime.UtcNow;
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, true);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures, true);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TestQueue);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime, initialThreshold);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask
+                , Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures, Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom
+                , Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime);
+
+            WaitTillTrue(() => GetRegardingEmails(workflowTask).Count() == 1, 60);
+
+            WaitTillTrue(() => initialThreshold < Refresh(workflowTask).GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime), 60);
+
+            workflowTask = Refresh(workflowTask);
+            Thread.Sleep(1000);
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddDays(-1));
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime, DateTime.UtcNow.AddDays(-2));
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime);
+
+            WorkflowSchedulerService.StartNewContinuousWorkflowFor(workflowTask.Id);
+            WaitTillTrue(() => WorkflowSchedulerService.GetRecurringInstancesFailed(workflowTask.Id).Count() > 1, 60);
+
+            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            WaitTillTrue(() => GetRegardingEmails(workflowTask).Count() == 2, 60);
+
+            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            Thread.Sleep(60000);
+            Assert.AreEqual(2, GetRegardingEmails(workflowTask).Count());
+
+            XrmService.Delete(workflowTask);
+            XrmService.Delete(account);
+        }
+        /// <summary>
+        /// Verifies a notification generated for target workflow failures
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskMonitorTargetsTest()
+        {
+            var initialMinumumThreshold = DateTime.UtcNow.AddDays(-1);
+
+            DeleteAll(Entities.account);
+
+            var workflowName = "Test Account Target Failure";
+
+            DeleteWorkflowTasks(workflowName);
+
+            var account = CreateAccount();
+
+            var scheduleFailWorkflow = GetWorkflow(workflowName);
+
+            var workflowTask = InitialiseValidWorkflowTask();
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, scheduleFailWorkflow);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddDays(-2));
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_name, workflowName);
+            workflowTask = CreateAndRetrieve(workflowTask);
+
+            WaitTillTrue(() => Refresh(workflowTask).GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime) > DateTime.UtcNow.AddDays(-1), 60);
+
+            var workflow = CreateWorkflowInstance<TargetWorkflowTaskMonitorInstance>(workflowTask);
+            WaitTillTrue(() => workflow.HasNewFailure(), 60);
+
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, true);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures, true);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TestQueue);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime, initialMinumumThreshold);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask
+                , Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures, Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom
+                , Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime);
+
+            //okay need to set conditions for the target having not executed
+            WaitTillTrue(() => GetRegardingEmails(workflowTask).Any(), 60);
+
+            WaitTillTrue(() => Refresh(workflowTask).GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime) > initialMinumumThreshold, 60);
+            workflowTask = Refresh(workflowTask);
+
+            Assert.IsFalse(workflow.HasNewFailure());
+
+            Thread.Sleep(1000);
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddDays(-2));
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextexecutiontime);
+
+
+            WaitTillTrue(() => workflow.HasNewFailure(), 60);
+
+            XrmService.Delete(workflowTask);
+            XrmService.Delete(account);
+        }
+
+        /// <summary>
+        /// Verifies tasks executions wait between spawns and stop before maximum defined (isolation) timespan
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskVerifyWaitAndIsolationThresholdTests()
+        {
+            //get target workflow creates a note on the workflow task
+            var targetName = TestAccountTargetWorkflowName;
+            var targetWorkflow = GetTargetAccountWorkflow();
+            //delete previous instances
+            DeleteWorkflowTasks(targetName);
+            //fetch all accounts
+            var fetchXml = GetFetchAllAccounts();
+
+            DeleteAll(Entities.account);
+            //create some target accounts
+            var toCreate = 5;
+            var createdAccounts = new List<Entity>();
+            for (var i = 0; i < toCreate; i++)
+                createdAccounts.Add(CreateAccount());
+            //create workflow task
+            var waitTime = 3;
+            var expectedMinimumTime = (toCreate * waitTime) - waitTime;
+
+            var workflow = CreateWorkflowTask(targetName, targetWorkflow, fetchXml, waitPeriod: waitTime, nextExecution: DateTime.UtcNow.AddDays(2));
+            //verify spawned and attached notes to the accounts
+            var activity = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflow);
+
+            var now = DateTime.UtcNow;
+            activity.DoIt(true);
+            var finished = DateTime.UtcNow;
+            Assert.IsTrue(finished - now >= new TimeSpan(0, 0, expectedMinimumTime));
+
+            var fakeSandboxThreshold = 11;
+            Assert.IsTrue(expectedMinimumTime > fakeSandboxThreshold);
+            activity.MaxSandboxIsolationExecutionSeconds = fakeSandboxThreshold;
+            now = DateTime.UtcNow;
+            activity.DoIt(true);
+            finished = DateTime.UtcNow;
+            Assert.IsTrue(finished - now < new TimeSpan(0, 0, fakeSandboxThreshold));
+        }
+
         /// <summary>
         /// Verifies continuous workflow not started, started or killed for change of On value
         /// </summary>
@@ -145,7 +387,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
         /// Verifies that a workflow task with workflow targeting fetch query correctly spawns and executes on creation
         /// </summary>
         [TestMethod]
-        public void WorkflowTaskFetchTargetTestTest()
+        public void WorkflowTaskFetchTargetTest()
         {
             //get target workflow creates a note on the workflow task
             var targetName = TestAccountTargetWorkflowName;
@@ -190,6 +432,16 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             return fetchXml;
         }
 
+        private Entity CreateWorkflowTask(string name, Entity targetWorkflow, string fetchXml, int? waitPeriod = null, DateTime? nextExecution = null)
+        {
+            var entity = InitialiseWorkflowTask(name, targetWorkflow, fetchXml);
+            entity.SetField(Fields.jmcg_workflowtask_.jmcg_waitsecondspertargetworkflowcreation, waitPeriod);
+            if (nextExecution.HasValue)
+                entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, nextExecution);
+            entity = CreateAndRetrieve(entity);
+            return entity;
+        }
+
         private Entity CreateWorkflowTask(string name, Entity targetWorkflow)
         {
             return CreateWorkflowTask(name, targetWorkflow, null);
@@ -212,7 +464,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_periodperrununit,
                 OptionSets.WorkflowTask.PeriodPerRunUnit.Days);
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_periodperrunamount, 1);
-            entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow);
+            entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddMinutes(-10));
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
             if (!fetchXml.IsNullOrWhiteSpace())
             {

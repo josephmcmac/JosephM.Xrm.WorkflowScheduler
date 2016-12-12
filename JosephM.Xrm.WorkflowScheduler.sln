@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B1931720-B94A-4F07-8ABC-03F950A3B317}"
 	ProjectSection(SolutionItems) = preProject
-		Solution Items\Customisations.xls = Solution Items\Customisations.xls
-		Solution Items\JosephMcGregorWorkflowScheduler_1_0_0_0.zip = Solution Items\JosephMcGregorWorkflowScheduler_1_0_0_0.zip
-		Solution Items\TestComponents_1_0_0_0.zip = Solution Items\TestComponents_1_0_0_0.zip
+		Solution Items\Customisations.xlsx = Solution Items\Customisations.xlsx
+		Solution Items\JosephMcGregorWorkflowScheduler_1_1_0_0.zip = Solution Items\JosephMcGregorWorkflowScheduler_1_1_0_0.zip
+		Solution Items\TestComponents_1_1_0_0.zip = Solution Items\TestComponents_1_1_0_0.zip
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler", "JosephM.Xrm.WorkflowScheduler\JosephM.Xrm.WorkflowScheduler.csproj", "{C1680534-FA12-4C76-A7A4-4F1843D7DCC2}"
@@ -22,6 +22,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Read Me", "Read Me", "{E906
 	ProjectSection(SolutionItems) = preProject
 		Read Me\Configuring Test Script.docx = Read Me\Configuring Test Script.docx
 		Read Me\Solution Details.docx = Read Me\Solution Details.docx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{F4152FBB-1BAF-4E9D-BBB5-DCE08536C8D4}"
+	ProjectSection(SolutionItems) = preProject
+		SolutionItems\solution.xrmconnection = SolutionItems\solution.xrmconnection
 	EndProjectSection
 EndProject
 Global

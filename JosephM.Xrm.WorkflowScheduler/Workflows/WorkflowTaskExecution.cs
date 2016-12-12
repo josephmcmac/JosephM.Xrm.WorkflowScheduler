@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using JosephM.Xrm.WorkflowScheduler.Core;
 using Microsoft.Xrm.Sdk.Workflow;
 using Schema;
+using System.Threading;
 
 namespace JosephM.Xrm.WorkflowScheduler.Workflows
 {
@@ -26,15 +27,17 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
     {
         protected override void Execute()
         {
-            var nextExecutionTime = DoIt();
+            var nextExecutionTime = DoIt(IsSandboxIsolated);
             ActivityThisType.NextExecutionTime.Set(ExecutionContext, nextExecutionTime);
         }
 
-        private DateTime DoIt()
+        public DateTime DoIt(bool isSandboxIsolated)
         {
+            var startedAt = DateTime.UtcNow;
             var target = XrmService.Retrieve(TargetType, TargetId);
             var thisExecutionTime = target.GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime)
                                     ?? DateTime.UtcNow;
+            var waitSeconds = target.GetInt(Fields.jmcg_workflowtask_.jmcg_waitsecondspertargetworkflowcreation);
             if (!target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_on))
                 return thisExecutionTime;
 
@@ -64,9 +67,18 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                                         Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype, TargetType)
                                     , XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_fetchquery, TargetType)));
                         var results = XrmService.RetrieveAllFetch(fetchQuery);
+                        var numberToDo = results.Count();
+                        var numberDone = 0;
                         foreach (var result in results)
                         {
+                            if (isSandboxIsolated && DateTime.UtcNow - startedAt > new TimeSpan(0, 0, MaxSandboxIsolationExecutionSeconds - 10))
+                                break;
                             XrmService.StartWorkflow(targetWorkflow.Value, result.Id);
+                            numberDone++;
+                            if (numberDone >= numberToDo)
+                                break;
+                            if (waitSeconds > 0)
+                                Thread.Sleep(waitSeconds * 1000);
                         }
                         break;
                     }
@@ -85,7 +97,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             {
                 case OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes:
                     {
-                        return thisExecutionTime.AddDays(periodAmount);
+                        return thisExecutionTime.AddMinutes(periodAmount);
                     }
                 case OptionSets.WorkflowTask.PeriodPerRunUnit.Hours:
                     {

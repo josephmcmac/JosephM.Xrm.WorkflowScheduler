@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+    <style type="text/css">
+        p th td {
+            font-family: Segoe UI, Tahoma, Arial;
+            font-size: 11px;
+            color: #444444;
+        }
+
+        th {
+            vertical-align: top;
+            text-align: left;
+            margin: 5px;
+            border-style: solid;
+            border-width: 1px;
+            padding: 5px;
+        }
+
+        td {
+            vertical-align: top;
+            text-align: left;
+            margin: 5px;
+            border-style: solid;
+            border-width: 1px;
+            padding: 5px;
+        }
+    </style>
+    <h1>Joseph Mcgregor Workflow Scheduler</h1>
+    <p>This solution adds the capability to configure workflow processes to run on a recurring schedule</p>
+    <p>Recurring workflows are configured by creating 'Workflow Task' records. The ways which workflows may be configured to recur are explained in the table below</p>
+    <p>Note the workflows which are targeted by the recurrence are required to be configured with the "Run On Demand" optrion checked so the Workflow Scheduler components may start instances of it</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Workflow Execution Type</th>
+                <th>Recurrence Type</th>
+            </tr>
+        </thead>
+        <tr>
+            <td>Target This Workflow Task</td>
+            <td>
+                One instance of the workflow will execute on the schedule. In this case the target type of the target workflow is required to be the 'Workflow Task' record type.<br /><br />
+                Generally this would be used to run a workflow containing a custom workflow activity. An example could be triggering integration or other business processes too complex or not appropriate to express in a standard configured workflow
+            </td>
+        </tr>
+        <tr>
+            <td>Target Per Fetch Result</td>
+            <td>
+                An instance of the workflow will execute on the schedule for each record returned by a fetch query. In this case the target type of the target workflow is required to be the same as the fetch query.<br /><br />
+                An example is identifying a set of records which are active and have past the expiry date. Those records could be identified through a fetch query and the workflow could be triggered to set each of them to expired
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

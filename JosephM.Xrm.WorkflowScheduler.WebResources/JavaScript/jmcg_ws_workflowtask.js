@@ -23,4 +23,5 @@ wsWorkflowTasks.RunOnSave = function () {
 wsWorkflowTasks.RefreshVisibility = function () {
     var isFetchTarget = wsPageUtility.GetFieldValue("jmcg_workflowexecutiontype") == wsWorkflowTasks.Options.WorkflowExecutionType.TargetPerFetchResult;
     wsPageUtility.SetFieldVisibility("jmcg_fetchquery", isFetchTarget);
+    wsPageUtility.SetFieldVisibility("jmcg_waitsecondspertargetworkflowcreation", isFetchTarget);
 }

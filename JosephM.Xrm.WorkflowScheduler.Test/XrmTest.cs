@@ -321,6 +321,28 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             set { _testProduct = value; }
         }
 
+        private Entity _testQueue;
+
+        public Entity TestQueue
+        {
+            get
+            {
+                if (_testQueue == null)
+                {
+                    _testQueue = XrmService.GetFirst("queue", "name", "TESTSCRIPTQUEUE");
+                    if (_testQueue == null)
+                    {
+                        _testQueue = new Entity("queue");
+                        _testQueue.SetField("name", "TESTSCRIPTQUEUE");
+                        _testQueue.SetField("emailaddress", "fakeemail@example.com");
+                        _testQueue = CreateAndRetrieve(_testQueue);
+                    }
+                }
+                return _testQueue;
+            }
+            set { _testQueue = value; }
+        }
+
         public void SetRequiredProductFields(Entity product)
         {
             if (product.GetStringField("productnumber").IsNullOrWhiteSpace())
@@ -587,12 +609,17 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
                 new[] { new ConditionExpression("objectid", ConditionOperator.Equal, regardingObject.Id) }, null);
         }
 
-        public T CreateWorkflowInstance<T>()
+        public T CreateWorkflowInstance<T>(Entity target = null)
             where T : XrmWorkflowActivityInstanceBase, new()
         {
             var instance = new T();
             instance.XrmService = XrmService;
             instance.LogController = Controller;
+            if (target != null)
+            {
+                instance.TargetId = target.Id;
+                instance.TargetType = target.LogicalName;
+            }
             return instance;
         }
     }

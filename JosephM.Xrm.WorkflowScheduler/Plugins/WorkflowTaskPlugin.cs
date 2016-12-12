@@ -19,9 +19,84 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
 
         public override void GoExtention()
         {
+            TurnOffIfDeactivated();
             VerifyPeriod();
             ValidateTarget();
             SpawnOrTurnOffRecurrance();
+            ValidateNotifications();
+            ResetThresholdsWhenMonitorTurnedOn();
+            SpawnMonitorInstance();
+        }
+
+        private void TurnOffIfDeactivated()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent) &&
+                IsMode(PluginMode.Synchronous))
+            {
+                if (OptionSetChangedTo(Fields.jmcg_workflowtask_.statecode, XrmPicklists.State.Inactive))
+                    SetField(Fields.jmcg_workflowtask_.jmcg_on, false);
+            }
+        }
+
+        private void SpawnMonitorInstance()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PostEvent) &&
+                IsMode(PluginMode.Synchronous))
+            {
+                if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_on))
+                {
+                    WorkflowSchedulerService.StartNewMonitorWorkflowFor(TargetId);
+                }
+                if (BooleanChangingToFalse(Fields.jmcg_workflowtask_.jmcg_on))
+                {
+                    WorkflowSchedulerService.StopMonitorWorkflowFor(TargetId);
+                }
+            }
+        }
+
+        private void ResetThresholdsWhenMonitorTurnedOn()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent) &&
+                IsMode(PluginMode.Synchronous))
+            {
+                //set these when turned on so only subsequent failures picked up
+                if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures)
+                    && !TargetEntity.Contains(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime))
+                    SetField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime, DateTime.UtcNow);
+                if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures)
+                    && !TargetEntity.Contains(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime))
+                    SetField(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime, DateTime.UtcNow);
+            }
+        }
+
+
+        private void ValidateNotifications()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent) &&
+                IsMode(PluginMode.Synchronous))
+            {
+                //the email queues are required if either of the notificatins are on
+                if (FieldChanging(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures
+                    , Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures
+                    , Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom
+                    , Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto))
+                {
+                    var eitherNotificationOn = GetBoolean(
+                        Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures)
+                                               ||
+                                               GetBoolean(
+                                                   Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures);
+                    if (eitherNotificationOn)
+                    {
+                        if (GetField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom) == null)
+                            throw new NullReferenceException(string.Format("{0} Is Required",
+                                GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom)));
+                        if (GetField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto) == null)
+                            throw new NullReferenceException(string.Format("{0} Is Required",
+                                GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto)));
+                    }
+                }
+            }
         }
 
         private void SpawnOrTurnOffRecurrance()

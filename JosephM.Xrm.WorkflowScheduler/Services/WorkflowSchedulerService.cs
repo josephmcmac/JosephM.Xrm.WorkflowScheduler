@@ -28,9 +28,30 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
             XrmService.StartWorkflow(GetContinuousWorkflowProcessId(), targetId);
         }
 
+        public Guid GetMonitorWorkflowProcessId()
+        {
+            return new Guid("5F69D869-0A3C-4DBB-871B-4BED39E20A89");
+        }
+
+        public void StartNewMonitorWorkflowFor(Guid targetId)
+        {
+            XrmService.StartWorkflow(GetMonitorWorkflowProcessId(), targetId);
+        }
+
+        public void StopMonitorWorkflowFor(Guid targetId)
+        {
+            var instances = GetMonitorInstances(targetId);
+            StopRunningWorkflowInstances(instances);
+        }
+
         public void StopContinuousWorkflowFor(Guid targetId)
         {
             var instances = GetRecurringInstances(targetId);
+            StopRunningWorkflowInstances(instances);
+        }
+
+        private void StopRunningWorkflowInstances(IEnumerable<Entity> instances)
+        {
             foreach (var instance in instances)
             {
                 var thisStatus = instance.GetOptionSetValue(Fields.asyncoperation_.statuscode);
@@ -48,16 +69,53 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
             }
         }
 
+        public IEnumerable<Entity> GetRecurringInstancesFailed(Guid workflowTaskId)
+        {
+            var lastFailedJobQuery = XrmService.BuildQuery(Entities.asyncoperation,
+                new string[0],
+                new[]
+                {
+                                new ConditionExpression(Fields.asyncoperation_.statuscode, ConditionOperator.Equal,
+                                    OptionSets.SystemJob.StatusReason.Failed),
+                                new ConditionExpression(Fields.asyncoperation_.regardingobjectid, ConditionOperator.Equal,
+                                    workflowTaskId)
+                }
+                , null);
+            var workflowLink = lastFailedJobQuery.AddLink(Entities.workflow, Fields.asyncoperation_.workflowactivationid,
+                Fields.workflow_.workflowid);
+            workflowLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.workflow_.parentworkflowid, ConditionOperator.Equal, GetContinuousWorkflowProcessId()));
+            return XrmService.RetrieveAll(lastFailedJobQuery);
+        }
+
+        public IEnumerable<Entity> GetMonitorInstances(Guid targetId)
+        {
+            var workflowId = GetMonitorWorkflowProcessId();
+            return GetRunningInstances(targetId, workflowId);
+        }
+
         public IEnumerable<Entity> GetRecurringInstances(Guid targetId)
+        {
+            var workflowId = GetContinuousWorkflowProcessId();
+            return GetRunningInstances(targetId, workflowId);
+        }
+
+        private IEnumerable<Entity> GetRunningInstances(Guid targetId, Guid workflowId)
         {
             var conditions = new[]
             {
-                new ConditionExpression(Fields.asyncoperation_.statuscode, ConditionOperator.In, new object[] { OptionSets.SystemJob.StatusReason.Waiting,OptionSets.SystemJob.StatusReason.WaitingForResources,OptionSets.SystemJob.StatusReason.InProgress, OptionSets.SystemJob.StatusReason.Pausing }),
+                new ConditionExpression(Fields.asyncoperation_.statuscode, ConditionOperator.In,
+                    new object[]
+                    {
+                        OptionSets.SystemJob.StatusReason.Waiting, OptionSets.SystemJob.StatusReason.WaitingForResources,
+                        OptionSets.SystemJob.StatusReason.InProgress, OptionSets.SystemJob.StatusReason.Pausing
+                    }),
                 new ConditionExpression(Fields.asyncoperation_.regardingobjectid, ConditionOperator.Equal, targetId)
             };
             var query = XrmService.BuildQuery(Entities.asyncoperation, null, conditions, null);
-            var workflowLink = query.AddLink(Entities.workflow, Fields.asyncoperation_.workflowactivationid, Fields.workflow_.workflowid);
-            workflowLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.workflow_.parentworkflowid, ConditionOperator.Equal, GetContinuousWorkflowProcessId()));
+            var workflowLink = query.AddLink(Entities.workflow, Fields.asyncoperation_.workflowactivationid,
+                Fields.workflow_.workflowid);
+            workflowLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.workflow_.parentworkflowid,
+                ConditionOperator.Equal, workflowId));
             var instances = XrmService.RetrieveAll(query);
             return instances;
         }

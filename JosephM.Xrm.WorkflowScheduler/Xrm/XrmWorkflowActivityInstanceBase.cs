@@ -107,21 +107,50 @@ namespace JosephM.Xrm.WorkflowScheduler
 
         protected abstract void Execute();
 
-
+        private Guid? _targetId;
         public Guid TargetId
         {
-            get { return Context.PrimaryEntityId; }
+            get
+            {
+                return _targetId.HasValue ? _targetId.Value : Context.PrimaryEntityId;
+            }
+            set
+            {
+                _targetId = value;
+            }
         }
 
-
+        private string _targetType;
         public string TargetType
         {
-            get { return Context.PrimaryEntityName; }
+            get
+            {
+                return !string.IsNullOrWhiteSpace(_targetType) ? _targetType : Context.PrimaryEntityName;
+            }
+            set
+            {
+                _targetType = value;
+            }
         }
 
         public void Trace(string message)
         {
             TracingService.Trace(message);
+        }
+
+        public bool IsSandboxIsolated
+        {
+            get
+            {
+                return Context.IsolationMode == 2;
+            }
+        }
+
+        private int _maxSandboxIsolationExecutionSeconds = 120;
+        public int MaxSandboxIsolationExecutionSeconds
+        {
+            get { return _maxSandboxIsolationExecutionSeconds; }
+            set { _maxSandboxIsolationExecutionSeconds = value; }
         }
     }
 }
