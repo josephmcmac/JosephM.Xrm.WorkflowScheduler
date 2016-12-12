@@ -115,11 +115,17 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             }
         }
 
-        public void DeleteAll(string entityType)
+        public void DeleteAll(string entityType, bool throwForError = false)
         {
             var query = new QueryExpression(entityType);
             var items = XrmService.RetrieveAll(query);
-            XrmService.DeleteMultiple(items);
+            if (throwForError)
+            {
+                foreach (var item in items)
+                    XrmService.Delete(item);
+            }
+            else
+                XrmService.DeleteMultiple(items);
         }
 
         public void DeleteRecentData()
