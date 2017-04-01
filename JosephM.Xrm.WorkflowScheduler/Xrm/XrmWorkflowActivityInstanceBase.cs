@@ -120,6 +120,19 @@ namespace JosephM.Xrm.WorkflowScheduler
             }
         }
 
+        private Guid? _currentUserId;
+        public Guid CurrentUserId
+        {
+            get
+            {
+                return _currentUserId.HasValue ? _currentUserId.Value : Context.InitiatingUserId;
+            }
+            set
+            {
+                _currentUserId = value;
+            }
+        }
+
         private string _targetType;
         public string TargetType
         {

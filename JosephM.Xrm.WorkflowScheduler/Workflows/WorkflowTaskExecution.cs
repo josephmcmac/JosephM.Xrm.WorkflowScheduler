@@ -8,6 +8,10 @@ using JosephM.Xrm.WorkflowScheduler.Core;
 using Microsoft.Xrm.Sdk.Workflow;
 using Schema;
 using System.Threading;
+using Microsoft.Crm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk;
+using JosephM.Xrm.WorkflowScheduler.Services;
 
 namespace JosephM.Xrm.WorkflowScheduler.Workflows
 {
@@ -85,34 +89,147 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             }
             var periodUnit = target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_periodperrununit);
             var periodAmount = target.GetInt(Fields.jmcg_workflowtask_.jmcg_periodperrunamount);
-            var nextExecutionTime = CalculateNextExecutionTime(thisExecutionTime, periodUnit, periodAmount, XrmService);
-            if (nextExecutionTime <= DateTime.UtcNow)
-                nextExecutionTime = CalculateNextExecutionTime(DateTime.UtcNow, periodUnit, periodAmount, XrmService);
+            var skipWeekendsAndClosures = target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_skipweekendsandbusinessclosures);
+            var nextExecutionTime = CalculateNextExecutionTime(thisExecutionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
             return nextExecutionTime;
         }
 
-        public static DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, XrmService xrmService)
+        public DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, bool skipWeekendsAndClosures)
         {
+            var executionTime = thisExecutionTime;
             switch (periodUnit)
             {
                 case OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes:
                     {
-                        return thisExecutionTime.AddMinutes(periodAmount);
+                        executionTime = thisExecutionTime.AddMinutes(periodAmount);
+                        break;
                     }
                 case OptionSets.WorkflowTask.PeriodPerRunUnit.Hours:
                     {
-                        return thisExecutionTime.AddHours(periodAmount);
+                        executionTime = thisExecutionTime.AddHours(periodAmount);
+                        break;
                     }
                 case OptionSets.WorkflowTask.PeriodPerRunUnit.Days:
                     {
-                        return thisExecutionTime.AddDays(periodAmount);
+                        executionTime = thisExecutionTime.AddDays(periodAmount);
+                        break;
                     }
                 case OptionSets.WorkflowTask.PeriodPerRunUnit.Months:
                     {
-                        return thisExecutionTime.AddMonths(periodAmount);
+                        executionTime = thisExecutionTime.AddMonths(periodAmount);
+                        break;
+                    }
+                default:
+                    {
+                        throw new Exception(string.Format("Error there is no logic implemented for the {0} with option value of {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit, Entities.jmcg_workflowtask), periodAmount));
                     }
             }
-            throw new Exception(string.Format("Error there is no logic implemented for the {0} with option value of {1}", xrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit, Entities.jmcg_workflowtask), periodAmount));
+            if (executionTime <= DateTime.UtcNow)
+                executionTime = CalculateNextExecutionTime(DateTime.UtcNow, periodUnit, periodAmount, skipWeekendsAndClosures);
+
+            if (!skipWeekendsAndClosures)
+                return executionTime;
+
+            //if skip weekends and closures and the calculated date is one
+            //then skip to the next date
+            var executionTimeUserLocal = ConvertToUserLocal(executionTime);
+
+            //if weekend
+            if (executionTimeUserLocal.DayOfWeek == DayOfWeek.Saturday
+                || executionTimeUserLocal.DayOfWeek == DayOfWeek.Sunday)
+                return CalculateNextExecutionTime(executionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
+            //if business closure
+            if(IsBusinessClosure(executionTime))
+                return CalculateNextExecutionTime(executionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
+
+            return executionTime;
+        }
+
+        private bool IsBusinessClosure(DateTime executionTime)
+        {
+            return GetClosureTimes(executionTime)
+                .Any(ti => ti.Key <= LocalisationService.ConvertToTargetTime(executionTime)
+                && ti.Value >= LocalisationService.ConvertToTargetTime(executionTime));
+        }
+
+        private IEnumerable<KeyValuePair<DateTime, DateTime>> _closureTimes;
+        public IEnumerable<KeyValuePair<DateTime,DateTime>> GetClosureTimes(DateTime requiredStartTime)
+        {
+            if (_closureTimes == null)
+            {
+                var start = requiredStartTime.AddDays(-1);
+                var end = requiredStartTime.AddYears(1);
+
+                var query = XrmService.BuildQuery(Entities.organization, new string[0], null, null);
+                var join1 = query.AddLink(Entities.calendar, Fields.organization_.businessclosurecalendarid, Fields.calendar_.calendarid);
+                var join2 = join1.AddLink(Entities.calendarrule, Fields.calendar_.calendarid, Fields.calendarrule_.calendarid);
+                join2.EntityAlias = "CR";
+                join2.Columns = XrmService.CreateColumnSet(new string[] { Fields.calendarrule_.starttime, Fields.calendarrule_.effectiveintervalend });
+                join2.LinkCriteria.AddCondition(new ConditionExpression(Fields.calendarrule_.starttime, ConditionOperator.GreaterEqual, start));
+                join2.LinkCriteria.AddCondition(new ConditionExpression(Fields.calendarrule_.starttime, ConditionOperator.LessEqual, end));
+
+                var calendarRules = XrmService.RetrieveAll(query);
+
+                //todo consider cast to datetime
+                //todo not actually utc really
+                _closureTimes = calendarRules
+                    .Select(c => new KeyValuePair<DateTime, DateTime>(
+                        LocalisationService.ChangeUtcToLocal((DateTime)c.GetFieldValue("CR." + Fields.calendarrule_.starttime)),
+                        LocalisationService.ChangeUtcToLocal((DateTime)c.GetFieldValue("CR." + Fields.calendarrule_.effectiveintervalend))))
+                    .ToArray();
+            }
+            return _closureTimes;
+        }
+
+        private DateTime ConvertToUserLocal(DateTime executionTime)
+        {
+            return LocalisationService.ConvertToTargetTime(executionTime);
+        }
+
+        private int? _userTimeZoneCode;
+        private int UserTimeZoneCode
+        {
+            get
+            {
+                if (!_userTimeZoneCode.HasValue)
+                {
+                    var userSettings = XrmService.GetFirst(Entities.usersettings, Fields.usersettings_.systemuserid, CurrentUserId, new[] { Fields.usersettings_.timezonecode });
+                    if (userSettings == null)
+                        throw new NullReferenceException(string.Format("Error getting {0} for user ", XrmService.GetEntityLabel(Entities.usersettings)));
+                    if (userSettings.GetField(Fields.usersettings_.timezonecode) == null)
+                        throw new NullReferenceException(string.Format("Error {0} is empty in the {1} record", XrmService.GetFieldLabel(Fields.usersettings_.timezonecode, Entities.usersettings), XrmService.GetEntityLabel(Entities.usersettings)));
+
+
+                    _userTimeZoneCode = userSettings.GetInt(Fields.usersettings_.timezonecode);
+                }
+                return _userTimeZoneCode.Value;
+            }
+        }
+
+        private Entity _timeZone;
+        private Entity TimeZone
+        {
+            get
+            {
+                if (_timeZone == null)
+                {
+                    _timeZone = XrmService.GetFirst(Entities.timezonedefinition, Fields.timezonedefinition_.timezonecode, UserTimeZoneCode, new[] { Fields.timezonedefinition_.standardname });
+                }
+                return _timeZone;
+            }
+        }
+
+        private LocalisationService _localisationService;
+        private LocalisationService LocalisationService
+        {
+            get
+            {
+                if (_localisationService == null)
+                {
+                    _localisationService = new LocalisationService(new LocalisationSettings(TimeZone.GetStringField(Fields.timezonedefinition_.standardname)));
+                }
+                return _localisationService;
+            }
         }
     }
 }

@@ -3834,6 +3834,7 @@ namespace Schema
 			public const string createdonbehalfby = "createdonbehalfby";
 			public const string overriddencreatedon = "overriddencreatedon";
 			public const string jmcg_minimumschedulefailuredatetime = "jmcg_minimumschedulefailuredatetime";
+			public const string jmcg_skipweekendsandbusinessclosures = "jmcg_skipweekendsandbusinessclosures";
 			public const string importsequencenumber = "importsequencenumber";
 			public const string jmcg_name = "jmcg_name";
 			public const string jmcg_workflowtaskid = "jmcg_workflowtaskid";
