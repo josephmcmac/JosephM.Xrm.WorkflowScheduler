@@ -35,9 +35,9 @@ wsWorkflowTasks.RunOnSave = function () {
 
 wsWorkflowTasks.RefreshVisibility = function () {
     var isFetchTarget = wsPageUtility.GetFieldValue("jmcg_workflowexecutiontype") == wsWorkflowTasks.Options.WorkflowExecutionType.TargetPerFetchResult;
-    wsPageUtility.SetFieldVisibility("jmcg_fetchquery", isFetchTarget);
-    wsPageUtility.SetFieldVisibility("jmcg_waitsecondspertargetworkflowcreation", isFetchTarget);
     var isViewTarget = wsPageUtility.GetFieldValue("jmcg_workflowexecutiontype") == wsWorkflowTasks.Options.WorkflowExecutionType.TargetPerViewResult;
+    wsPageUtility.SetFieldVisibility("jmcg_fetchquery", isFetchTarget);
+    wsPageUtility.SetFieldVisibility("jmcg_waitsecondspertargetworkflowcreation", isFetchTarget || isViewTarget);
     var isTargetWorkflowSelected = wsPageUtility.GetFieldValue("jmcg_targetworkflow") != null;
     wsPageUtility.SetFieldVisibility("jmcg_targetviewselectionfield", isViewTarget && isTargetWorkflowSelected);
     wsPageUtility.SetFieldVisibility("jmcg_targetviewselectedname", isViewTarget && isTargetWorkflowSelected);
@@ -89,8 +89,9 @@ wsWorkflowTasks.PopulateViewSelectionList = function () {
             };
 
             var targetType = workflow["primaryentity"];
-            var conditions = [new wsServiceUtility.FilterCondition("returnedtypecode", wsServiceUtility.FilterOperator.Equal, targetType)];//, new wsServiceUtility.FilterCondition("type", wsServiceUtility.FilterOperator.Equal, 1039, wsServiceUtility.FieldType.Int)]
-            wsServiceUtility.RetrieveMultipleAsync("savedquery", ["savedqueryid", "name"], conditions, null, processViewResults);
+            var conditions = [new wsServiceUtility.FilterCondition("returnedtypecode", wsServiceUtility.FilterOperator.Equal, targetType)];
+            var orders = [new wsServiceUtility.OrderCondition("name", false)];
+            wsServiceUtility.RetrieveMultipleAsync("savedquery", ["savedqueryid", "name"], conditions, orders, processViewResults);
         };
 
         var targetWorkflowId = wsPageUtility.GetLookupId("jmcg_targetworkflow");
