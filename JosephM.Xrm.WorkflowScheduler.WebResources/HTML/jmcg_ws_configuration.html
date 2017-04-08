@@ -56,6 +56,13 @@
                 An example is identifying a set of records which are active and have past the expiry date. Those records could be identified through a fetch query and the workflow could be triggered to set each of them to expired
             </td>
         </tr>
+        <tr>
+            <td>Target Per View Result</td>
+            <td>
+                An instance of the workflow will execute on the schedule for each record returned by a saved system view. In this case the target type of the target workflow is required to be the same as the view.<br /><br />
+                This is intended to be used in similar scenarios to the Target Per Fetch Result option, but allows the logic for the targets to be configured in a system view rather than requiring the fetchxml to be entered
+            </td>
+        </tr>
     </table>
 </body>
 </html>
