@@ -81,6 +81,20 @@ WorkflowSchedulerPageUtility = function () {
              }
          }
      },
+     this.PicklistOption = function(key, value)
+     {
+         this.value = parseInt(key);
+         this.text = value;
+     },
+    /// <param name="fieldName" type="String">Name of the picklist field </param>
+    /// <param name="options" type="Array of this.PicklistOption">key value options for the picklist</param>
+    this.SetPicklistOptions = function (fieldName, options) {
+        var control = Xrm.Page.getControl(fieldName);
+        control.clearOptions();
+        for (var i = 0; i < options.length; i++) {
+            control.addOption(options[i], i);
+        }
+    },
     /// <summary>refreshes the option set field to include all configured options</summary>
      this.DisplayAllOptions = function (fieldName) {
          var options = Xrm.Page.getAttribute(fieldName).getOptions();

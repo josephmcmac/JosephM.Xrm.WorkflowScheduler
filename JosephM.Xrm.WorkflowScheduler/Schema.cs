@@ -3833,7 +3833,8 @@ namespace Schema
 			public const string owninguser = "owninguser";
 			public const string createdonbehalfby = "createdonbehalfby";
 			public const string overriddencreatedon = "overriddencreatedon";
-			public const string jmcg_minimumschedulefailuredatetime = "jmcg_minimumschedulefailuredatetime";
+			public const string jmcg_targetviewselectionfield = "jmcg_targetviewselectionfield";
+			public const string jmcg_targetviewselectedname = "jmcg_targetviewselectedname";
 			public const string jmcg_skipweekendsandbusinessclosures = "jmcg_skipweekendsandbusinessclosures";
 			public const string importsequencenumber = "importsequencenumber";
 			public const string jmcg_name = "jmcg_name";
@@ -3851,9 +3852,11 @@ namespace Schema
 			public const string jmcg_sendfailurenotificationsfrom = "jmcg_sendfailurenotificationsfrom";
 			public const string jmcg_fetchquery = "jmcg_fetchquery";
 			public const string jmcg_waitsecondspertargetworkflowcreation = "jmcg_waitsecondspertargetworkflowcreation";
+			public const string jmcg_targetviewid = "jmcg_targetviewid";
 			public const string jmcg_minimumtargetfailuredatetime = "jmcg_minimumtargetfailuredatetime";
 			public const string jmcg_sendnotificationforschedulefailures = "jmcg_sendnotificationforschedulefailures";
 			public const string createdon = "createdon";
+			public const string jmcg_minimumschedulefailuredatetime = "jmcg_minimumschedulefailuredatetime";
 			public const string jmcg_on = "jmcg_on";
 			public const string jmcg_periodperrunamount = "jmcg_periodperrunamount";
 			public const string jmcg_sendfailurenotificationsto = "jmcg_sendfailurenotificationsto";
@@ -10979,6 +10982,10 @@ namespace Schema
 				public const int Active = 1;
 				public const int Inactive = 2;
 			}
+			public static class TargetViewSelectionField
+			{
+				public const int Selecttochangetheselectedview = 0;
+			}
 			public static class Status
 			{
 				public const int Active = 0;
@@ -10988,6 +10995,7 @@ namespace Schema
 			{
 				public const int TargetThisWorkflowTask = 1;
 				public const int TargetPerFetchResult = 2;
+				public const int TargetPerViewResult = 3;
 			}
 		}
 		public static class ContractLine

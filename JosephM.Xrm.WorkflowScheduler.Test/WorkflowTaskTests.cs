@@ -348,27 +348,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             }
         }
 
-        private Entity InitialiseValidWorkflowTask()
-        {
-            var targetName = TestAccountTargetWorkflowName;
-            var targetWorkflowTaskWorkflow = GetWorkflow(targetName);
-            var fetchXml = @"<fetch version='1.0' output-format='xml-platform' mapping='logical' distinct='false'>
-                          <entity name='account'>
-                          </entity>
-                        </fetch>";
-
-            return InitialiseWorkflowTask(targetName, targetWorkflowTaskWorkflow, fetchXml);
-        }
-
-        private static string TestAccountTargetWorkflowName
-        {
-            get
-            {
-                var targetName = "Test Account Target";
-                return targetName;
-            }
-        }
-
         /// <summary>
         /// Verifies that a workflow task with workflow targeting itself correctly spawns and executes on creation
         /// </summary>
@@ -415,6 +394,43 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             WaitTillTrue(() => createdAccounts.All(e => GetRegardingNotes(e).Any()), 60);
         }
 
+        [TestMethod]
+        public void WorkflowTaskViewTargetTest()
+        {
+            //delete all accounts
+            var accounts = XrmService.RetrieveAllEntityType(Entities.account);
+            foreach (var account in accounts)
+                XrmService.Delete(account);
+
+            var testAccount = GetTESTACCOUNTVIEWAccount();
+
+            var testViewName = "Test Custom Account System View";
+            var testView = XrmService.GetFirst(Entities.savedquery, Fields.savedquery_.name, testViewName);
+            var workflowActivity = InitialiseValidWorkflowTask();
+            Assert.AreEqual(GetTargetAccountWorkflow().Id, workflowActivity.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow));
+            workflowActivity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype, OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult);
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_targetviewid, testView.Id.ToString());
+            workflowActivity = CreateAndRetrieve(workflowActivity);
+            Assert.AreEqual(testViewName, workflowActivity.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname));
+            //var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
+            //instance.DoIt(true);
+
+            WaitTillTrue(() => GetRegardingNotes(testAccount).Any(), 60);
+        }
+
+        private Entity GetTESTACCOUNTVIEWAccount()
+        {
+            var account = XrmService.GetFirst(Entities.account, Fields.account_.name, "TESTACCOUNTVIEW");
+            if (account == null)
+            {
+                account = CreateTestRecord(Entities.account, new Dictionary<string, object>()
+                {
+                    { Fields.account_.name, "TESTACCOUNTVIEW" }
+                });
+            }
+            return account;
+        }
+
         private Entity GetTargetAccountWorkflow()
         {
             return GetWorkflow(TestAccountTargetWorkflowName);
@@ -457,32 +473,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             return entity;
         }
 
-        private static Entity InitialiseWorkflowTask(string name, Entity targetWorkflow, string fetchXml)
-        {
-            var entity = new Entity(Entities.jmcg_workflowtask);
-            entity.SetField(Fields.jmcg_workflowtask_.jmcg_name, name);
-            entity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, targetWorkflow);
-            entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype,
-                OptionSets.WorkflowTask.WorkflowExecutionType.TargetThisWorkflowTask);
-            entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_periodperrununit,
-                OptionSets.WorkflowTask.PeriodPerRunUnit.Days);
-            entity.SetField(Fields.jmcg_workflowtask_.jmcg_periodperrunamount, 1);
-            entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddMinutes(-10));
-            entity.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
-            if (!fetchXml.IsNullOrWhiteSpace())
-            {
-                entity.SetField(Fields.jmcg_workflowtask_.jmcg_fetchquery, fetchXml);
-                entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype,
-                    OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult);
-            }
-            else
-            {
-                entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype,
-                    OptionSets.WorkflowTask.WorkflowExecutionType.TargetThisWorkflowTask);
-            }
-            return entity;
-        }
-
         private void DeleteWorkflowTasks(string targetName)
         {
             var entities = XrmService.RetrieveAllAndClauses(Entities.jmcg_workflowtask, new[]
@@ -491,19 +481,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             });
             foreach (var item in entities)
                 XrmService.Delete(item);
-        }
-
-        private Entity GetWorkflow(string name)
-        {
-            var query = XrmService.BuildQuery(Entities.workflow, null, new[]
-            {
-                new ConditionExpression(Fields.workflow_.type, ConditionOperator.Equal, OptionSets.Process.Type.Definition),
-                new ConditionExpression(Fields.workflow_.name, ConditionOperator.Equal, name) 
-            }, null);
-            var workflow = XrmService.RetrieveFirst(query);
-            if (workflow == null)
-                throw new NullReferenceException("Couldn't find workflow " + name);
-            return workflow;
         }
 
         private void DeleteSystemJobs(Entity targetWorkflow)

@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="HTML\jmcg_ws_configuration.html" />
+    <Content Include="JavaScript\jmcg_ws_webserviceutility.js" />
     <Content Include="JavaScript\jmcg_ws_workflowtask.js" />
     <Content Include="JavaScript\jmcg_ws_pageutility.js" />
   </ItemGroup>

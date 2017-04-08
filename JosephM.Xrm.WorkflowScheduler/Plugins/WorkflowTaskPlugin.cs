@@ -125,24 +125,42 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             {
                 if (FieldChanging(Fields.jmcg_workflowtask_.jmcg_targetworkflow,
                     Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype
-                    , Fields.jmcg_workflowtask_.jmcg_fetchquery))
+                    , Fields.jmcg_workflowtask_.jmcg_fetchquery
+                    , Fields.jmcg_workflowtask_.jmcg_targetviewid))
                 {
                     var requiredTargetedType = Entities.jmcg_workflowtask;
                     //if a fetch target validate the fetch and get its target type
-                    if (GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype) == OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult)
+                    var type = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype);
+                    switch (type)
                     {
-                        var fetch = GetStringField(Fields.jmcg_workflowtask_.jmcg_fetchquery);
-                        if (fetch.IsNullOrWhiteSpace())
-                            throw new InvalidPluginExecutionException(string.Format("{0} is required when {1} is {2}", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_fetchquery),
-                                GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype), GetOptionLabel(OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult, Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype)));
-                        try
-                        {
-                            requiredTargetedType = XrmService.ConvertFetchToQueryExpression(fetch).EntityName.ToLower();
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new InvalidPluginExecutionException(string.Format("There was an error validating {0} it could not be converted to a {1}", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_fetchquery), typeof(QueryExpression).Name), ex);
-                        }
+                        case OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult:
+                        case OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult:
+                            {
+                                var fetch = GetStringField(Fields.jmcg_workflowtask_.jmcg_fetchquery);
+                                if (type == OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult)
+                                {
+                                    var savedQueryId = GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewid);
+                                    if (string.IsNullOrWhiteSpace(savedQueryId))
+                                        throw new InvalidPluginExecutionException(string.Format("{0} is required when {1} is {2}", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetviewid),
+                                                GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype), GetOptionLabel(OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult, Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype)));
+                                    var savedQuery = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
+                                    fetch = savedQuery.GetStringField(Fields.savedquery_.fetchxml);
+                                    if (!XrmEntity.FieldsEqual(GetField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname), savedQuery.GetStringField(Fields.savedquery_.name)))
+                                        SetField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname, savedQuery.GetStringField(Fields.savedquery_.name));
+                                }
+                                if (fetch.IsNullOrWhiteSpace())
+                                    throw new InvalidPluginExecutionException(string.Format("{0} is required when {1} is {2}", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_fetchquery),
+                                        GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype), GetOptionLabel(OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult, Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype)));
+                                try
+                                {
+                                    requiredTargetedType = XrmService.ConvertFetchToQueryExpression(fetch).EntityName.ToLower();
+                                }
+                                catch (Exception ex)
+                                {
+                                    throw new InvalidPluginExecutionException(string.Format("There was an error validating {0} it could not be converted to a {1}", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_fetchquery), typeof(QueryExpression).Name), ex);
+                                }
+                                break;
+                            }
                     }
                     var targetWorkflowId = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow);
                     if (!targetWorkflowId.HasValue)

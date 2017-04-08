@@ -57,8 +57,15 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         break;
                     }
                 case OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult:
+                case OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult:
                     {
                         var fetchQuery = target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fetchquery);
+                        if (type == OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult)
+                        {
+                            var savedQueryId = target.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewid);
+                            var savedQuery = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
+                            fetchQuery = savedQuery.GetStringField(Fields.savedquery_.fetchxml);
+                        }
                         if (fetchQuery.IsNullOrWhiteSpace())
                             throw new NullReferenceException(
                                 string.Format("The target {0} is set as {1} of {2} but the required field {3} is empty"

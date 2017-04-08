@@ -146,6 +146,7 @@ namespace JosephM.Xrm.WorkflowScheduler
             {
                 public const int TargetThisWorkflowTask = 1;
                 public const int TargetPerFetchResult = 2;
+                public const int TargetPerViewResult = 3;
             }
         }
     }
