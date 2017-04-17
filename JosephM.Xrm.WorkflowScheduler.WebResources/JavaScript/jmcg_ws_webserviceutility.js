@@ -33,7 +33,7 @@ WsServiceUtility = function () {
         /// <param name="entityType" type="String">Logical name of type of records to retrieve. use lowercase</param>
         /// <param name="fields" type="Array of String">Array of the the logical names of fields to include in the results. use lowercase</param>
         /// <param name="conditions" type="Array of FilterCondition">Use new this.FilterCondition method to create each condition in the array</param>
-        /// <param name="orders" type="Array of OrderCondition">!! Not Implemented !!</param>
+        /// <param name="orders" type="Array of OrderCondition">Use new this.Ordercondition method to create each order in the array</param>
         /// <param name="asyncCallback" type="Function">Method to invoke asynchronously passing in the results as array of this.EntityObject objects the first argument</param>
         var executerequestxml = "";
         executerequestxml += "<request i:type='a:RetrieveMultipleRequest' xmlns:a='http://schemas.microsoft.com/xrm/2011/Contracts' >";
