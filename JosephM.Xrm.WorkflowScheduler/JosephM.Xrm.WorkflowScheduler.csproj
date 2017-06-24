@@ -60,6 +60,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\JsonHelper.cs" />
     <Compile Include="OptionSets.cs" />
     <Compile Include="Plugins\WorkflowTaskPlugin.cs" />
     <Compile Include="Schema.cs" />

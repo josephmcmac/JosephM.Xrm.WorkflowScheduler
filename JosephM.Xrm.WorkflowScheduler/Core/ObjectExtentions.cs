@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace JosephM.Xrm.WorkflowScheduler.Core
@@ -67,6 +68,36 @@ namespace JosephM.Xrm.WorkflowScheduler.Core
         public static bool IsNotEmpty(this object instance)
         {
             return !instance.IsEmpty();
+        }
+
+        /// <summary>
+        ///     Sets The Property Value Of The Object From The Raw String Value Loaded From app.config
+        /// </summary>
+        public static void SetPropertyByString(this object theObject, string propertyName, string rawConfigString)
+        {
+            if (rawConfigString.IsNullOrWhiteSpace())
+                theObject.SetPropertyValue(propertyName, null);
+
+            var property = theObject.GetType().GetProperty(propertyName);
+            var propertyType = property.PropertyType;
+            object newValue = null;
+
+            if (propertyType == typeof(bool))
+                newValue = rawConfigString == "1" || rawConfigString == "true";
+            else if (propertyType.IsEnum)
+                newValue = Enum.Parse(propertyType, rawConfigString);
+            else if (propertyType == typeof(IEnumerable<string>))
+                newValue = rawConfigString.Split(',');
+            else if (propertyType == typeof(int))
+                newValue = int.Parse(rawConfigString);
+            else if (propertyType == typeof(Password))
+                newValue = Password.CreateFromRawPassword(rawConfigString);
+            else if (propertyType.HasStringConstructor())
+                newValue = propertyType.CreateFromStringConstructor(rawConfigString);
+            else
+                newValue = rawConfigString;
+
+            theObject.SetPropertyValue(propertyName, newValue);
         }
     }
 }

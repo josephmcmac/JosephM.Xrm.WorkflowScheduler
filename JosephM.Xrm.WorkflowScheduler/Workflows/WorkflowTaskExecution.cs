@@ -1,17 +1,14 @@
-﻿using System;
+﻿using JosephM.Xrm.WorkflowScheduler.Core;
+using JosephM.Xrm.WorkflowScheduler.Services;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Microsoft.Xrm.Sdk.Workflow;
+using Schema;
+using System;
 using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JosephM.Xrm.WorkflowScheduler.Core;
-using Microsoft.Xrm.Sdk.Workflow;
-using Schema;
 using System.Threading;
-using Microsoft.Crm.Sdk.Messages;
-using Microsoft.Xrm.Sdk.Query;
-using Microsoft.Xrm.Sdk;
-using JosephM.Xrm.WorkflowScheduler.Services;
 
 namespace JosephM.Xrm.WorkflowScheduler.Workflows
 {
@@ -82,11 +79,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         var numberDone = 0;
                         foreach (var result in results)
                         {
-                            if (isSandboxIsolated && DateTime.UtcNow - startedAt > new TimeSpan(0, 0, MaxSandboxIsolationExecutionSeconds - 10))
-                                break;
                             XrmService.StartWorkflow(targetWorkflow.Value, result.Id);
                             numberDone++;
                             if (numberDone >= numberToDo)
+                                break;
+                            if (isSandboxIsolated && ((DateTime.UtcNow - startedAt) > new TimeSpan(0, 0, MaxSandboxIsolationExecutionSeconds - (waitSeconds + 5))))
                                 break;
                             if (waitSeconds > 0)
                                 Thread.Sleep(waitSeconds * 1000);

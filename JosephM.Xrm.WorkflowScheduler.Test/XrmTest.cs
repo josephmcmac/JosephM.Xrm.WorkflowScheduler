@@ -16,7 +16,7 @@ using Microsoft.Xrm.Sdk.Query;
 
 namespace JosephM.Xrm.WorkflowScheduler.Test
 {
-    [DeploymentItem("TestXrmConfiguration.xml")]
+    [DeploymentItem("solution.xrmconnection")]
     [TestClass]
     public abstract class XrmTest
     {
@@ -38,12 +38,21 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
         {
             get
             {
-                var readEncryptedFonfig = File.ReadAllText("TestXrmConfiguration.xml");
-                var decrypt = StringEncryptor.Decrypt(readEncryptedFonfig);
-                var deserialiser = new DataContractSerializer(typeof(TestXrmConfiguration));
-                var byteArray = Encoding.UTF8.GetBytes(decrypt);
-                using (var stream = new MemoryStream(byteArray))
-                    return (TestXrmConfiguration)deserialiser.ReadObject(stream);
+                var readEncryptedConfig = File.ReadAllText("solution.xrmconnection");
+                var dictionary =
+                    (Dictionary<string, string>)
+                        JsonHelper.JsonStringToObject(readEncryptedConfig, typeof(Dictionary<string, string>));
+
+                var xrmConfig = new XrmConfiguration();
+                foreach (var prop in xrmConfig.GetType().GetReadWriteProperties())
+                {
+                    var value = dictionary[prop.Name];
+                    if (value != null && prop.Name == nameof(XrmConfiguration.Password))
+                        xrmConfig.SetPropertyByString(prop.Name, new Password(value).GetRawPassword());
+                    else
+                        xrmConfig.SetPropertyByString(prop.Name, value);
+                }
+                return xrmConfig;
             }
         }
 
