@@ -418,6 +418,105 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             WaitTillTrue(() => GetRegardingNotes(testAccount).Any(), 60);
         }
 
+        [TestMethod]
+        public void WorkflowTaskViewNotificationsTest()
+        {
+            DeleteAll(Entities.jmcg_workflowtask);
+
+            //delete all accounts
+            var accounts = XrmService.RetrieveAllEntityType(Entities.account);
+            foreach (var account in accounts)
+                XrmService.Delete(account);
+            
+            var account1 = CreateAccount();
+            var account2 = CreateAccount();
+            var account3 = CreateAccount();
+            XrmService.Assign(account3, OtherUserId);
+            var account4 = CreateAccount();
+            XrmService.Assign(account4, GetTestTeam().Id, Entities.team);
+
+            var testViewName = "Active Accounts";
+            var testView = XrmService.GetFirst(Entities.savedquery, Fields.savedquery_.name, testViewName);
+            var workflowActivity = InitialiseValidWorkflowTask();
+            workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, null);
+            workflowActivity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype, OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification);
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationentitytype, Entities.account);
+            //email sender required
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, null);
+            try
+            {
+                workflowActivity = CreateAndRetrieve(workflowActivity);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            //email notification option required
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption, null);
+            try
+            {
+                workflowActivity = CreateAndRetrieve(workflowActivity);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowActivity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption, OptionSets.WorkflowTask.ViewNotificationOption.EmailOwningUsers);
+
+            //view required
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_targetviewid, null);
+            try
+            {
+                workflowActivity = CreateAndRetrieve(workflowActivity);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_targetviewid, testView.Id.ToString());
+            workflowActivity = CreateAndRetrieve(workflowActivity);
+            Assert.AreEqual(testViewName, workflowActivity.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname));
+            //var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
+            //instance.DoIt(true);
+
+            WaitTillTrue(() => GetRegardingEmails(workflowActivity).Count() == 2, 60);
+            var emails = GetRegardingEmails(workflowActivity);
+            Assert.AreEqual(1, emails.Count(e => e.GetActivityPartyReferences(Fields.email_.to).First().Id == CurrentUserId));
+            Assert.AreEqual(1, emails.Count(e => e.GetActivityPartyReferences(Fields.email_.to).First().Id == OtherUserId));
+
+            workflowActivity = InitialiseValidWorkflowTask();
+            workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, null);
+            workflowActivity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype, OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification);
+            workflowActivity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption, OptionSets.WorkflowTask.ViewNotificationOption.EmailQueue);
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_targetviewid, testView.Id.ToString());
+            workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationentitytype, Entities.account);
+            //recipient queue required
+            workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, null);
+            try
+            {
+                workflowActivity = CreateAndRetrieve(workflowActivity);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TestQueue);
+            workflowActivity = CreateAndRetrieve(workflowActivity);
+            Assert.AreEqual(testViewName, workflowActivity.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname));
+            //var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
+            //instance.DoIt(true);
+
+            WaitTillTrue(() => GetRegardingEmails(workflowActivity).Count() == 1, 60);
+            var secondEmail = GetRegardingEmails(workflowActivity).First();
+            Assert.AreEqual(TestQueue.Id, secondEmail.GetActivityPartyReferences(Fields.email_.to).First().Id);
+        }
+
         private Entity GetTESTACCOUNTVIEWAccount()
         {
             var account = XrmService.GetFirst(Entities.account, Fields.account_.name, "TESTACCOUNTVIEW");

@@ -23,8 +23,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customisations", "Customisations", "{01B5E26A-C17E-47BC-BFB4-B8B793DDE963}"
 	ProjectSection(SolutionItems) = preProject
 		Customisations\Customisations.xlsx = Customisations\Customisations.xlsx
-		..\JosephM.Xrm.WorkflowScheduler/Customisations\JosephMcGregorWorkflowScheduler_1_3_1_0.zip = ..\JosephM.Xrm.WorkflowScheduler/Customisations\JosephMcGregorWorkflowScheduler_1_3_1_0.zip
-		Customisations\TestComponents_1_3_0_0.zip = Customisations\TestComponents_1_3_0_0.zip
+		..\JosephM.Xrm.WorkflowScheduler/Customisations\JosephMcGregorWorkflowScheduler_2_0_0_0.zip = ..\JosephM.Xrm.WorkflowScheduler/Customisations\JosephMcGregorWorkflowScheduler_2_0_0_0.zip
+		Customisations\TestComponents_2_0_0_0.zip = Customisations\TestComponents_2_0_0_0.zip
 	EndProjectSection
 EndProject
 Global

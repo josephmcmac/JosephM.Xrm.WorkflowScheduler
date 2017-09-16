@@ -34,12 +34,12 @@
     <h1>Joseph Mcgregor Workflow Scheduler</h1>
     <p>This solution adds the capability to configure workflow processes to run on a recurring schedule</p>
     <p>Recurring workflows are configured by creating 'Workflow Task' records. The ways which workflows may be configured to recur are explained in the table below</p>
-    <p>Note the workflows which are targeted by the recurrence are required to be configured with the "Run On Demand" optrion checked so the Workflow Scheduler components may start instances of it</p>
+    <p>Note where workflows are targeted by the recurrence they are required to be configured with the "Run On Demand" option checked so the Workflow Scheduler component can start instances of it</p>
     <table>
         <thead>
             <tr>
                 <th>Workflow Execution Type</th>
-                <th>Recurrence Type</th>
+                <th>Details</th>
             </tr>
         </thead>
         <tr>
@@ -61,6 +61,14 @@
             <td>
                 An instance of the workflow will execute on the schedule for each record returned by a saved system view. In this case the target type of the target workflow is required to be the same as the view.<br /><br />
                 This is intended to be used in similar scenarios to the Target Per Fetch Result option, but allows the logic for the targets to be configured in a system view rather than requiring the fetchxml to be entered
+            </td>
+        </tr>
+        <tr>
+            <td>View Notification</td>
+            <td>
+                Notification emails will be sent when there are records returned by a system view. The notification email will list the records along with hyperlinks.<br /><br />
+                Notification's can be sent to either a queue recipient, or to each user who owns records in the view results and has an email address populated.<br /><br />
+                This is intended to be used where the view defines a set of records which require actioning
             </td>
         </tr>
     </table>

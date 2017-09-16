@@ -1490,11 +1490,11 @@ namespace JosephM.Xrm.WorkflowScheduler
             return result;
         }
 
-        public void Assign(Entity entity, Guid userId)
+        public void Assign(Entity entity, Guid userId, string type = "systemuser")
         {
             var request = new AssignRequest
             {
-                Assignee = CreateLookup("systemuser", userId),
+                Assignee = CreateLookup(type, userId),
                 Target = CreateLookup(entity)
             };
             Execute(request);

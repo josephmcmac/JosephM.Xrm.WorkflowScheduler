@@ -61,7 +61,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\JsonHelper.cs" />
-    <Compile Include="OptionSets.cs" />
+    <Compile Include="Emails\HtmlEmailGenerator.cs" />
+    <Compile Include="Extentions\XrmServiceExtentions.cs" />
     <Compile Include="Plugins\WorkflowTaskPlugin.cs" />
     <Compile Include="Schema.cs" />
     <Compile Include="JosephMPluginRegistration.cs" />

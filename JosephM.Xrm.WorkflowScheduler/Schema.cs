@@ -3826,43 +3826,47 @@ namespace Schema
 		}
 		public static class jmcg_workflowtask_
 		{
-			public const string owningteam = "owningteam";
-			public const string modifiedon = "modifiedon";
-			public const string jmcg_periodperrununit = "jmcg_periodperrununit";
-			public const string statuscode = "statuscode";
-			public const string owninguser = "owninguser";
-			public const string createdonbehalfby = "createdonbehalfby";
-			public const string overriddencreatedon = "overriddencreatedon";
-			public const string jmcg_targetviewselectionfield = "jmcg_targetviewselectionfield";
-			public const string jmcg_targetviewselectedname = "jmcg_targetviewselectedname";
-			public const string jmcg_skipweekendsandbusinessclosures = "jmcg_skipweekendsandbusinessclosures";
-			public const string importsequencenumber = "importsequencenumber";
-			public const string jmcg_name = "jmcg_name";
-			public const string jmcg_workflowtaskid = "jmcg_workflowtaskid";
-			public const string statecode = "statecode";
-			public const string jmcg_targetworkflow = "jmcg_targetworkflow";
-			public const string timezoneruleversionnumber = "timezoneruleversionnumber";
-			public const string utcconversiontimezonecode = "utcconversiontimezonecode";
-			public const string jmcg_nextexecutiontime = "jmcg_nextexecutiontime";
-			public const string owningbusinessunit = "owningbusinessunit";
 			public const string versionnumber = "versionnumber";
-			public const string modifiedby = "modifiedby";
-			public const string createdby = "createdby";
-			public const string jmcg_workflowexecutiontype = "jmcg_workflowexecutiontype";
-			public const string jmcg_sendfailurenotificationsfrom = "jmcg_sendfailurenotificationsfrom";
-			public const string jmcg_fetchquery = "jmcg_fetchquery";
-			public const string jmcg_waitsecondspertargetworkflowcreation = "jmcg_waitsecondspertargetworkflowcreation";
-			public const string jmcg_targetviewid = "jmcg_targetviewid";
-			public const string jmcg_minimumtargetfailuredatetime = "jmcg_minimumtargetfailuredatetime";
-			public const string jmcg_sendnotificationforschedulefailures = "jmcg_sendnotificationforschedulefailures";
 			public const string createdon = "createdon";
-			public const string jmcg_minimumschedulefailuredatetime = "jmcg_minimumschedulefailuredatetime";
-			public const string jmcg_on = "jmcg_on";
-			public const string jmcg_periodperrunamount = "jmcg_periodperrunamount";
+			public const string jmcg_waitsecondspertargetworkflowcreation = "jmcg_waitsecondspertargetworkflowcreation";
+			public const string jmcg_viewnotificationqueue = "jmcg_viewnotificationqueue";
+			public const string createdonbehalfby = "createdonbehalfby";
 			public const string jmcg_sendfailurenotificationsto = "jmcg_sendfailurenotificationsto";
+			public const string jmcg_targetviewid = "jmcg_targetviewid";
+			public const string timezoneruleversionnumber = "timezoneruleversionnumber";
 			public const string modifiedonbehalfby = "modifiedonbehalfby";
+			public const string jmcg_fetchquery = "jmcg_fetchquery";
+			public const string jmcg_sendnotificationforschedulefailures = "jmcg_sendnotificationforschedulefailures";
+			public const string jmcg_workflowtaskid = "jmcg_workflowtaskid";
+			public const string owningteam = "owningteam";
+			public const string overriddencreatedon = "overriddencreatedon";
+			public const string jmcg_viewnotificationoption = "jmcg_viewnotificationoption";
+			public const string statecode = "statecode";
+			public const string jmcg_viewnotificationentitytype = "jmcg_viewnotificationentitytype";
+			public const string jmcg_crmbaseurl = "jmcg_crmbaseurl";
+			public const string jmcg_targetviewselectionfield = "jmcg_targetviewselectionfield";
+			public const string jmcg_periodperrununit = "jmcg_periodperrununit";
+			public const string jmcg_on = "jmcg_on";
+			public const string utcconversiontimezonecode = "utcconversiontimezonecode";
 			public const string ownerid = "ownerid";
+			public const string modifiedon = "modifiedon";
+			public const string importsequencenumber = "importsequencenumber";
+			public const string jmcg_targetworkflow = "jmcg_targetworkflow";
 			public const string jmcg_sendnotificationfortargetfailures = "jmcg_sendnotificationfortargetfailures";
+			public const string jmcg_minimumtargetfailuredatetime = "jmcg_minimumtargetfailuredatetime";
+			public const string jmcg_workflowexecutiontype = "jmcg_workflowexecutiontype";
+			public const string jmcg_periodperrunamount = "jmcg_periodperrunamount";
+			public const string createdby = "createdby";
+			public const string modifiedby = "modifiedby";
+			public const string jmcg_sendfailurenotificationsfrom = "jmcg_sendfailurenotificationsfrom";
+			public const string owninguser = "owninguser";
+			public const string jmcg_minimumschedulefailuredatetime = "jmcg_minimumschedulefailuredatetime";
+			public const string owningbusinessunit = "owningbusinessunit";
+			public const string jmcg_targetviewselectedname = "jmcg_targetviewselectedname";
+			public const string statuscode = "statuscode";
+			public const string jmcg_skipweekendsandbusinessclosures = "jmcg_skipweekendsandbusinessclosures";
+			public const string jmcg_name = "jmcg_name";
+			public const string jmcg_nextexecutiontime = "jmcg_nextexecutiontime";
 		}
 		public static class leadaddress_
 		{
@@ -10970,6 +10974,21 @@ namespace Schema
 		}
 		public static class WorkflowTask
 		{
+			public static class ViewNotificationOption
+			{
+				public const int EmailQueue = 0;
+				public const int EmailOwningUsers = 1;
+			}
+			public static class Status
+			{
+				public const int Active = 0;
+				public const int Inactive = 1;
+			}
+			public static class TargetViewSelectionField
+			{
+				public const int Selecttochangetheselectedview = 0;
+				public const int Loading = 1;
+			}
 			public static class PeriodPerRunUnit
 			{
 				public const int Minutes = 1;
@@ -10977,25 +10996,17 @@ namespace Schema
 				public const int Days = 3;
 				public const int Months = 4;
 			}
-			public static class StatusReason
-			{
-				public const int Active = 1;
-				public const int Inactive = 2;
-			}
-			public static class TargetViewSelectionField
-			{
-				public const int Selecttochangetheselectedview = 0;
-			}
-			public static class Status
-			{
-				public const int Active = 0;
-				public const int Inactive = 1;
-			}
 			public static class WorkflowExecutionType
 			{
 				public const int TargetThisWorkflowTask = 1;
 				public const int TargetPerFetchResult = 2;
 				public const int TargetPerViewResult = 3;
+				public const int ViewNotification = 4;
+			}
+			public static class StatusReason
+			{
+				public const int Active = 1;
+				public const int Inactive = 2;
 			}
 		}
 		public static class ContractLine

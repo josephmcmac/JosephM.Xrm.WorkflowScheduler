@@ -1,4 +1,6 @@
 ﻿using JosephM.Xrm.WorkflowScheduler.Core;
+using JosephM.Xrm.WorkflowScheduler.Emails;
+using JosephM.Xrm.WorkflowScheduler.Extentions;
 using JosephM.Xrm.WorkflowScheduler.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -35,17 +37,18 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
         public DateTime DoIt(bool isSandboxIsolated)
         {
             var startedAt = DateTime.UtcNow;
-            var target = XrmService.Retrieve(TargetType, TargetId);
-            var thisExecutionTime = target.GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime)
+            var thisExecutionTime = Target.GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime)
                                     ?? DateTime.UtcNow;
-            var waitSeconds = target.GetInt(Fields.jmcg_workflowtask_.jmcg_waitsecondspertargetworkflowcreation);
-            if (!target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_on))
+            var waitSeconds = Target.GetInt(Fields.jmcg_workflowtask_.jmcg_waitsecondspertargetworkflowcreation);
+            if (!Target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_on))
                 return thisExecutionTime;
 
-            var targetWorkflow = target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow);
-            if (!targetWorkflow.HasValue)
+            var type = Target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype);
+            var targetWorkflow = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow);
+            if (type != OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification
+                && !targetWorkflow.HasValue)
                 throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow, TargetType), XrmService.GetEntityLabel(TargetType)));
-            var type = target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype);
+
             switch (type)
             {
                 case OptionSets.WorkflowTask.WorkflowExecutionType.TargetThisWorkflowTask:
@@ -56,12 +59,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 case OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerFetchResult:
                 case OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult:
                     {
-                        var fetchQuery = target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fetchquery);
+                        var fetchQuery = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fetchquery);
                         if (type == OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult)
                         {
-                            var savedQueryId = target.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewid);
-                            var savedQuery = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
-                            fetchQuery = savedQuery.GetStringField(Fields.savedquery_.fetchxml);
+                            fetchQuery = View.GetStringField(Fields.savedquery_.fetchxml);
                         }
                         if (fetchQuery.IsNullOrWhiteSpace())
                             throw new NullReferenceException(
@@ -90,12 +91,175 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         }
                         break;
                     }
+                case OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification:
+                    {
+                        SendViewNotifications(Target);
+                        break;
+                    }
             }
-            var periodUnit = target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_periodperrununit);
-            var periodAmount = target.GetInt(Fields.jmcg_workflowtask_.jmcg_periodperrunamount);
-            var skipWeekendsAndClosures = target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_skipweekendsandbusinessclosures);
+            var periodUnit = Target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_periodperrununit);
+            var periodAmount = Target.GetInt(Fields.jmcg_workflowtask_.jmcg_periodperrunamount);
+            var skipWeekendsAndClosures = Target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_skipweekendsandbusinessclosures);
             var nextExecutionTime = CalculateNextExecutionTime(thisExecutionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
             return nextExecutionTime;
+        }
+
+        private Guid GetNotificationSendingQueue()
+        {
+            var queueId = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom);
+            if (!queueId.HasValue)
+                throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TargetType), XrmService.GetEntityLabel(TargetType)));
+            return queueId.Value;
+        }
+
+        private Entity _target;
+        private Entity Target
+        {
+            get
+            {
+                if (_target == null)
+                {
+                    _target = XrmService.Retrieve(TargetType, TargetId);
+                }
+                return _target;
+            }
+        }
+
+        private Entity _view;
+        private Entity View
+        {
+            get
+            {
+                if (_view == null)
+                {
+                    var savedQueryId = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewid);
+                    _view = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
+                }
+                return _view;
+            }
+        }
+
+        public QueryExpression GetViewFetchAsQuery()
+        {
+            var fetchXml = View.GetStringField(Fields.savedquery_.fetchxml);
+            var query = XrmService.ConvertFetchToQueryExpression(fetchXml);
+            return query;
+        }
+
+        private void SendViewNotifications(Entity target)
+        {
+            var query = GetViewFetchAsQuery();
+
+            var sendOption = target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption);
+            switch(sendOption)
+            {
+                case OptionSets.WorkflowTask.ViewNotificationOption.EmailOwningUsers:
+                    {
+                        //add owner to query
+                        query.ColumnSet.AddColumn("ownerid");
+                        //remove any current user woner filters
+                        if (query.Criteria != null && query.Criteria.Conditions != null)
+                        {
+                            foreach (var condition in query.Criteria.Conditions)
+                            {
+                                if (condition.Operator == ConditionOperator.EqualUserId)
+                                    condition.Operator = ConditionOperator.NotNull;
+                            }
+                        }
+                        //ensure owner has email
+                        var ownerLink = query.AddLink(Entities.systemuser, "ownerid", Fields.systemuser_.systemuserid);
+                        ownerLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.systemuser_.internalemailaddress, ConditionOperator.NotNull));
+                        var recordsForReminder = XrmService.RetrieveAll(query);
+                        var usersToNotifyIds = new List<Guid>();
+                        foreach(var item in recordsForReminder)
+                        {
+                            if(item.GetLookupType("ownerid") == Entities.systemuser)
+                            {
+                                var userId = item.GetLookupGuid("ownerid");
+                                if (userId.HasValue)
+                                    usersToNotifyIds.Add(userId.Value);
+                            }
+                        }
+                        usersToNotifyIds = usersToNotifyIds.Distinct().ToList();
+                        foreach (var userId in usersToNotifyIds)
+                        {
+                            var thisDudesRecords = recordsForReminder
+                                .Where(r => r.GetLookupGuid("ownerid") == userId)
+                                .ToArray();
+                            SendViewNotificationEmailWithTable(Entities.systemuser, userId, thisDudesRecords);
+                        }
+                        break;
+                    }
+                case OptionSets.WorkflowTask.ViewNotificationOption.EmailQueue:
+                    {
+                        var recordsForReminder = XrmService.RetrieveAll(query);
+                        var recipientQueue = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue);
+                        if(!recipientQueue.HasValue)
+                            throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TargetType), XrmService.GetEntityLabel(TargetType)));
+                        SendViewNotificationEmailWithTable(Entities.queue, recipientQueue.Value, recordsForReminder);
+                        break;
+                    }
+            }
+        }
+
+        private void RemoveAllFields(LinkEntity link)
+        {
+            link.Columns = new ColumnSet(false);
+            if (link.LinkEntities != null)
+            {
+                foreach (var childLink in link.LinkEntities)
+                {
+                    RemoveAllFields(link);
+                }
+            }
+        }
+
+        public void SendViewNotificationEmailWithTable(string recipientType, Guid recipientId, IEnumerable<Entity> recordsToList)
+        {
+            if (recordsToList.Any())
+            {
+                var baseUrl = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+                if(baseUrl != null && !baseUrl.StartsWith("http") && baseUrl.Contains("."))
+                {
+                    var split = baseUrl.Split('.');
+                    var type = split.First();
+                    var field = split.ElementAt(1);
+                    var query = XrmService.BuildSourceQuery(type, new[] { field });
+                    var firstRecord = XrmService.RetrieveFirst(query);
+                    baseUrl = firstRecord.GetStringField(field);
+                }
+
+                //var entityType = GetViewFetchAsQuery().EntityName;
+                //var viewHyperlink = string.Format("<a href={0}>{0}</a>", baseUrl);
+                //var pStyle = "style='font-family: Arial,sans-serif;font-size: 12pt;padding:6.15pt 6.15pt 6.15pt 6.15pt'";
+                //var content =
+                //    string.Format(@"<p {0}>This is an automated notification there are '{1}' to be actioned</p>
+                //                <p {0}>Please review and process the records</p>
+                //                <p {0}>{2}</p>", pStyle, View.GetStringField(Fields.savedquery_.name), viewHyperlink);
+                //exlude primary key and fields in linked entities in list because label
+                var fieldsForTable = recordsToList.First().GetFieldsInEntity().Where(s => s.IndexOf(".") == -1).Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) }).ToArray();
+                var email = new HtmlEmailGenerator(XrmService, baseUrl);
+                email.AppendParagraph(string.Format("This is an automated that there are {0}", View.GetStringField(Fields.savedquery_.name)));
+                email.AppendTable(recordsToList, fields: fieldsForTable);
+
+                SendNotificationEmail(recipientType, recipientId, email.GetContent());
+            }
+        }
+
+        private void SendNotificationEmail(string recipientType, Guid recipientId, string content)
+        {
+            var email = new Entity(Entities.email);
+            email.AddFromParty(Entities.queue, GetNotificationSendingQueue());
+            email.AddToParty(recipientType, recipientId);
+
+            var viewName = View.GetStringField(Fields.savedquery_.name);
+            email.SetField(Fields.email_.subject, viewName + " Notification");
+            email.SetField(Fields.email_.description, content);
+            email.SetLookupField(Fields.email_.regardingobjectid, TargetId, TargetType);
+
+            //create and send the email
+            var emailId = XrmService.Create(email);
+            XrmService.SendEmail(emailId);
         }
 
         public DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, bool skipWeekendsAndClosures)

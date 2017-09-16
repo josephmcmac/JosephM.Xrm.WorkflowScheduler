@@ -5,6 +5,7 @@ using Schema;
 using JosephM.Core.Extentions;
 using System;
 using Microsoft.Xrm.Sdk.Query;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JosephM.Xrm.WorkflowScheduler.Test
 {
@@ -47,9 +48,13 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             return InitialiseWorkflowTask(targetName, targetWorkflowTaskWorkflow, fetchXml);
         }
 
-        public static Entity InitialiseWorkflowTask(string name, Entity targetWorkflow, string fetchXml)
+        public Entity InitialiseWorkflowTask(string name, Entity targetWorkflow, string fetchXml)
         {
+            Assert.IsTrue(GetTestSettings() != null);
+
             var entity = new Entity(Entities.jmcg_workflowtask);
+            entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_periodperrununit,
+                OptionSets.WorkflowTask.PeriodPerRunUnit.Days);
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_name, name);
             entity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, targetWorkflow);
             entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype,
@@ -59,6 +64,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_periodperrunamount, 1);
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddMinutes(-10));
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
+            entity.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, "jmcg_wstestsettings.jmcg_crminstanceurl");
             if (!fetchXml.IsNullOrWhiteSpace())
             {
                 entity.SetField(Fields.jmcg_workflowtask_.jmcg_fetchquery, fetchXml);
@@ -84,6 +90,55 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             if (workflow == null)
                 throw new NullReferenceException("Couldn't find workflow " + name);
             return workflow;
+        }
+
+
+        public Entity GetTestSettings()
+        {
+            var settings = XrmService.GetFirst("jmcg_wstestsettings");
+            if (settings == null)
+            {
+                settings = new Entity("jmcg_wstestsettings");
+                var connection = new XrmConnection(XrmConfiguration);
+                settings.SetField("jmcg_name", "Test Workflow Settings");
+                settings.SetField("jmcg_crminstanceurl", connection.GetWebUrl());
+                settings = CreateAndRetrieve(settings);
+            }
+            return settings;
+        }
+
+        public Guid? _otherUserId;
+        public Guid OtherUserId
+        {
+            get
+            {
+                if (!_otherUserId.HasValue)
+                {
+                    var userQuery = XrmService.BuildQuery(Entities.systemuser, null, new[]
+                    {
+                new ConditionExpression(Fields.systemuser_.systemuserid, ConditionOperator.NotEqual, CurrentUserId),
+                new ConditionExpression(Fields.systemuser_.isintegrationuser, ConditionOperator.Equal, false),
+                new ConditionExpression(Fields.systemuser_.isdisabled, ConditionOperator.Equal, false)
+                }, null);
+                    var otherUser = XrmService.RetrieveFirst(userQuery);
+                    Assert.IsNotNull(otherUser);
+                    _otherUserId = otherUser.Id;
+                }
+                return _otherUserId.Value;
+            }
+        }
+
+        public Entity GetTestTeam()
+        {
+            var team = XrmService.GetFirst(Entities.team, Fields.team_.name, "TESTTEAM");
+            if (team == null)
+            {
+                team = new Entity(Entities.team);
+                team.SetField(Fields.team_.name, "TESTTEAM");
+                team.SetLookupField(Fields.team_.businessunitid, XrmService.GetFirst(Entities.businessunit));
+                team = CreateAndRetrieve(team);
+            }
+            return team;
         }
     }
 }

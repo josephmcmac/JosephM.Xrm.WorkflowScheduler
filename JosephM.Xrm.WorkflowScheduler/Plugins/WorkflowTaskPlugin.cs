@@ -22,10 +22,68 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             TurnOffIfDeactivated();
             VerifyPeriod();
             ValidateTarget();
+            VerifyRequiredFields();
             SpawnOrTurnOffRecurrance();
             ValidateNotifications();
             ResetThresholdsWhenMonitorTurnedOn();
             SpawnMonitorInstance();
+            SetViewName();
+        }
+
+        private void VerifyRequiredFields()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
+            {
+                if (FieldChanging(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype
+                , Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom
+                , Fields.jmcg_workflowtask_.jmcg_viewnotificationoption
+                , Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue))
+                {
+                    var type = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype);
+                    if (type == OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification)
+                    {
+                        var notificationSenderQueue = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom);
+                        if (!notificationSenderQueue.HasValue)
+                        {
+                            throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom)));
+                        }
+                        var viewNotificationOption = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption);
+                        if (viewNotificationOption == -1)
+                        {
+                            throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption)));
+                        }
+                        var viewNotificiationRecipientQueue = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue);
+                        if (viewNotificationOption == OptionSets.WorkflowTask.ViewNotificationOption.EmailQueue
+                            && !viewNotificiationRecipientQueue.HasValue)
+                        {
+                            throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue)));
+                        }
+                    }
+                }
+            }
+        }
+
+        private void SetViewName()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
+            {
+                if (FieldChanging(Fields.jmcg_workflowtask_.jmcg_targetviewid
+                    , Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype))
+                {
+                    var savedQueryId = GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewid);
+                    var type = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype);
+                    var viewRequired = type == OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult
+                        || type == OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification;
+                    if (viewRequired && string.IsNullOrWhiteSpace(savedQueryId))
+                        throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetviewid)));
+                    if (!string.IsNullOrWhiteSpace(savedQueryId))
+                    {
+                        var savedQuery = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
+                        if (!XrmEntity.FieldsEqual(GetField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname), savedQuery.GetStringField(Fields.savedquery_.name)))
+                            SetField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname, savedQuery.GetStringField(Fields.savedquery_.name));
+                    }
+                }
+            }
         }
 
         private void TurnOffIfDeactivated()
@@ -145,8 +203,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
                                                 GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype), GetOptionLabel(OptionSets.WorkflowTask.WorkflowExecutionType.TargetPerViewResult, Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype)));
                                     var savedQuery = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
                                     fetch = savedQuery.GetStringField(Fields.savedquery_.fetchxml);
-                                    if (!XrmEntity.FieldsEqual(GetField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname), savedQuery.GetStringField(Fields.savedquery_.name)))
-                                        SetField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname, savedQuery.GetStringField(Fields.savedquery_.name));
                                 }
                                 if (fetch.IsNullOrWhiteSpace())
                                     throw new InvalidPluginExecutionException(string.Format("{0} is required when {1} is {2}", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_fetchquery),
@@ -162,16 +218,19 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
                                 break;
                             }
                     }
-                    var targetWorkflowId = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow);
-                    if (!targetWorkflowId.HasValue)
-                        throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow)));
-                    var workflow = WorkflowSchedulerService.GetWorkflow(targetWorkflowId.Value);
-                    if (workflow.GetStringField(Fields.workflow_.primaryentity) != requiredTargetedType)
-                        throw new InvalidPluginExecutionException(
-                            string.Format(
-                                "Error the {0} targets the entity type of {1} but was expected to target the type {2}"
-                                , GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow),
-                                workflow.GetStringField(Fields.workflow_.primaryentity), requiredTargetedType));
+                    if (type != OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification)
+                    {
+                        var targetWorkflowId = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow);
+                        if (!targetWorkflowId.HasValue)
+                            throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow)));
+                        var workflow = WorkflowSchedulerService.GetWorkflow(targetWorkflowId.Value);
+                        if (workflow.GetStringField(Fields.workflow_.primaryentity) != requiredTargetedType)
+                            throw new InvalidPluginExecutionException(
+                                string.Format(
+                                    "Error the {0} targets the entity type of {1} but was expected to target the type {2}"
+                                    , GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow),
+                                    workflow.GetStringField(Fields.workflow_.primaryentity), requiredTargetedType));
+                    }
                 }
             }
         }

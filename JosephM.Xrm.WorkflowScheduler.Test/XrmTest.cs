@@ -80,10 +80,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             entity.SetField("firstname", "Test Script");
             entity.SetField("lastname", DateTime.Now.ToFileTime().ToString());
             entity.SetField("fax", "0999999999fax");
-            entity.SetField("emailaddress1", "testemail@ntaadev.com");
+            entity.SetField("emailaddress1", "testemail@example.com");
             if (entity.GetField("address1_line1") == null)
             {
-                entity.SetField("address1_line1", "9/455 Bourke St");
+                entity.SetField("address1_line1", "123 1st St");
                 entity.SetField("address1_city", "Melbourne");
                 entity.SetField("address1_stateorprovince", "VIC");
                 entity.SetField("address1_postalcode", "3000");
@@ -572,10 +572,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             entity.SetField("name", "Test Account - " + DateTime.Now.ToLocalTime());
             entity.SetField("fax", "0999999999fax");
             entity.SetField("telephone1", "0999999999");
-            entity.SetField("emailaddress1", "testemail@ntaadev.com");
+            entity.SetField("emailaddress1", "testemail@example.com");
             if (entity.GetField("address1_line1") == null)
             {
-                entity.SetField("address1_line1", "9/455 Bourke St");
+                entity.SetField("address1_line1", "123 1st St");
                 entity.SetField("address1_city", "Melbourne");
                 entity.SetField("address1_stateorprovince", "VIC");
                 entity.SetField("address1_postalcode", "3000");
