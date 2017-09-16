@@ -11,6 +11,7 @@ using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Xml;
 
 namespace JosephM.Xrm.WorkflowScheduler.Workflows
 {
@@ -198,6 +199,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             if (recordsToList.Any())
             {
                 var crmUrl = GetCrmURL();
+                var isToOwner = Target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption) == OptionSets.WorkflowTask.ViewNotificationOption.EmailOwningUsers;
                 //var entityType = GetViewFetchAsQuery().EntityName;
                 //var viewHyperlink = string.Format("<a href={0}>{0}</a>", baseUrl);
                 //var pStyle = "style='font-family: Arial,sans-serif;font-size: 12pt;padding:6.15pt 6.15pt 6.15pt 6.15pt'";
@@ -206,15 +208,51 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 //                <p {0}>Please review and process the records</p>
                 //                <p {0}>{2}</p>", pStyle, View.GetStringField(Fields.savedquery_.name), viewHyperlink);
                 //exlude primary key and fields in linked entities in list because label
-                var fieldsForTable = recordsToList.First().GetFieldsInEntity().Where(s => s.IndexOf(".") == -1).Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) }).ToArray();
+                var fieldsForTable = GetViewLayoutcellFieldNames()
+                    .Where(s => s.IndexOf(".") == -1)
+                    .Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) })
+                    .ToList();
+                if(isToOwner && fieldsForTable.Contains("ownerid"))
+                {
+                    fieldsForTable.Remove("ownerid");
+                }
                 var email = new HtmlEmailGenerator(XrmService, crmUrl);
-                email.AppendParagraph(string.Format("This is an automated that there are {0}", View.GetStringField(Fields.savedquery_.name)));
+                email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
+                    , isToOwner ? "that you own" : "there are"
+                    , View.GetStringField(Fields.savedquery_.name)));
                 email.AppendTable(recordsToList, fields: fieldsForTable);
 
                 var viewName = View.GetStringField(Fields.savedquery_.name);
                 var subject = viewName + " Notification";
                 SendNotificationEmail(recipientType, recipientId, subject, email.GetContent());
             }
+        }
+
+        public IEnumerable<string> GetViewLayoutcellFieldNames()
+        {
+            var layoutXml = View.GetStringField(Fields.savedquery_.layoutxml);
+            var xml = "<xml>" + layoutXml + "</xml>";
+            var attributeNames = new List<string>();
+            var xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(xml);
+            if (xmlDocument.ChildNodes != null
+                && xmlDocument.ChildNodes.Count > 0
+                && xmlDocument.ChildNodes[0].ChildNodes != null
+                && xmlDocument.ChildNodes[0].ChildNodes.Count > 0
+                && xmlDocument.ChildNodes[0].ChildNodes[0].ChildNodes != null
+                && xmlDocument.ChildNodes[0].ChildNodes[0].ChildNodes.Count > 0)
+            {
+                var attributeNodes = xmlDocument
+                    .ChildNodes[0] //xml
+                    .ChildNodes[0] //grid
+                    .ChildNodes[0] //row
+                    .ChildNodes; //cells
+                foreach (XmlNode child in attributeNodes)
+                {
+                    attributeNames.Add(child.Attributes["name"].Value);
+                }
+            }
+            return attributeNames;
         }
 
         public DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, bool skipWeekendsAndClosures)
