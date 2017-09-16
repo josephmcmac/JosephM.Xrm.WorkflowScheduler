@@ -200,6 +200,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
 
             WaitTillTrue(() => Refresh(workflowTask).GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime) > initialMinumumThreshold, 60);
             workflowTask = Refresh(workflowTask);
+            workflow = CreateWorkflowInstance<TargetWorkflowTaskMonitorInstance>(workflowTask);
 
             Assert.IsFalse(workflow.HasNewFailure());
 
@@ -207,7 +208,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
 
             workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddDays(-2));
             workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextexecutiontime);
-
+            workflow = CreateWorkflowInstance<TargetWorkflowTaskMonitorInstance>(workflowTask);
 
             WaitTillTrue(() => workflow.HasNewFailure(), 60);
 

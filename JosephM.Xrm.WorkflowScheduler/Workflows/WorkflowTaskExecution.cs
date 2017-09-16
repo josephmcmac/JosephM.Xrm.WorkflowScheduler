@@ -104,27 +104,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             return nextExecutionTime;
         }
 
-        private Guid GetNotificationSendingQueue()
-        {
-            var queueId = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom);
-            if (!queueId.HasValue)
-                throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TargetType), XrmService.GetEntityLabel(TargetType)));
-            return queueId.Value;
-        }
-
-        private Entity _target;
-        private Entity Target
-        {
-            get
-            {
-                if (_target == null)
-                {
-                    _target = XrmService.Retrieve(TargetType, TargetId);
-                }
-                return _target;
-            }
-        }
-
         private Entity _view;
         private Entity View
         {
@@ -218,17 +197,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
         {
             if (recordsToList.Any())
             {
-                var baseUrl = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
-                if(baseUrl != null && !baseUrl.StartsWith("http") && baseUrl.Contains("."))
-                {
-                    var split = baseUrl.Split('.');
-                    var type = split.First();
-                    var field = split.ElementAt(1);
-                    var query = XrmService.BuildSourceQuery(type, new[] { field });
-                    var firstRecord = XrmService.RetrieveFirst(query);
-                    baseUrl = firstRecord.GetStringField(field);
-                }
-
+                var crmUrl = GetCrmURL();
                 //var entityType = GetViewFetchAsQuery().EntityName;
                 //var viewHyperlink = string.Format("<a href={0}>{0}</a>", baseUrl);
                 //var pStyle = "style='font-family: Arial,sans-serif;font-size: 12pt;padding:6.15pt 6.15pt 6.15pt 6.15pt'";
@@ -238,28 +207,14 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 //                <p {0}>{2}</p>", pStyle, View.GetStringField(Fields.savedquery_.name), viewHyperlink);
                 //exlude primary key and fields in linked entities in list because label
                 var fieldsForTable = recordsToList.First().GetFieldsInEntity().Where(s => s.IndexOf(".") == -1).Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) }).ToArray();
-                var email = new HtmlEmailGenerator(XrmService, baseUrl);
+                var email = new HtmlEmailGenerator(XrmService, crmUrl);
                 email.AppendParagraph(string.Format("This is an automated that there are {0}", View.GetStringField(Fields.savedquery_.name)));
                 email.AppendTable(recordsToList, fields: fieldsForTable);
 
-                SendNotificationEmail(recipientType, recipientId, email.GetContent());
+                var viewName = View.GetStringField(Fields.savedquery_.name);
+                var subject = viewName + " Notification";
+                SendNotificationEmail(recipientType, recipientId, subject, email.GetContent());
             }
-        }
-
-        private void SendNotificationEmail(string recipientType, Guid recipientId, string content)
-        {
-            var email = new Entity(Entities.email);
-            email.AddFromParty(Entities.queue, GetNotificationSendingQueue());
-            email.AddToParty(recipientType, recipientId);
-
-            var viewName = View.GetStringField(Fields.savedquery_.name);
-            email.SetField(Fields.email_.subject, viewName + " Notification");
-            email.SetField(Fields.email_.description, content);
-            email.SetLookupField(Fields.email_.regardingobjectid, TargetId, TargetType);
-
-            //create and send the email
-            var emailId = XrmService.Create(email);
-            XrmService.SendEmail(emailId);
         }
 
         public DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, bool skipWeekendsAndClosures)

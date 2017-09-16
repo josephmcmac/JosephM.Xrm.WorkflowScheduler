@@ -33,6 +33,15 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             _content.AppendLine(string.Format("<p {0}>{1}</p>", pStyle, text));
         }
 
+        //don't change to negative may break queries
+        public static int MaximumNumberOfEntitiesToList
+        {
+            get
+            {
+                return 100;
+            }
+        }
+
         public void AppendTable(IEnumerable<Entity> take, IEnumerable<string> fields = null, bool noHyperLinks = false, string appId = null)
         {
             if (!take.Any())
@@ -51,15 +60,13 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             foreach (var field in fields)
                 AppendThForField(table, firstItem, field);
             table.AppendLine("</tr></thead>");
-            foreach (var item in take)
+            foreach (var item in take.Take(MaximumNumberOfEntitiesToList))
             {
                 table.AppendLine("<tr>");
                 if (IncludeHyperlinks && !noHyperLinks)
                 {
                     table.AppendLine(string.Format("<td {0}>", tdStyle));
-                    var url = string.Format("{0}/main.aspx?{1}pagetype=entityrecord&etn={2}&id={3}", WebUrl,
-                        appId == null ? null : ("appid=" + appId + "&"),
-                        item.LogicalName, item.Id);
+                    var url = CreateUrl(item, appId);
                     AppendUrl(url, "View", table);
                     table.AppendLine("</td>");
                 }
@@ -70,6 +77,18 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             }
             table.AppendLine("</table>");
             _content.AppendLine(table.ToString());
+
+            if(take.Count() > MaximumNumberOfEntitiesToList)
+            {
+                AppendParagraph(string.Format("Note this list is incomplete as the maximum of {0} items has been listed", MaximumNumberOfEntitiesToList));
+            }
+        }
+
+        public string CreateUrl(Entity item, string appId = null)
+        {
+            return string.Format("{0}/main.aspx?{1}pagetype=entityrecord&etn={2}&id={3}", WebUrl,
+                appId == null ? null : ("appid=" + appId + "&"),
+                item.LogicalName, item.Id);
         }
 
         private void AppendThForField(StringBuilder table, Entity firstItem, string field)
@@ -88,7 +107,12 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
 
         private void AppendUrl(string url, string label, StringBuilder sb)
         {
-            sb.Append(string.Format("<a {0} href='{1}' >{2}</a>", aStyle, url, label));
+            sb.Append(CreateHyperlink(url, label));
+        }
+
+        public string CreateHyperlink(string url, string label)
+        {
+            return string.Format("<a {0} href='{1}' >{2}</a>", aStyle, url, label);
         }
 
         public string GetContent()
