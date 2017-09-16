@@ -42,6 +42,12 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
                     var type = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype);
                     if (type == OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification)
                     {
+                        var viewNotificationEntityType = GetStringField(Fields.jmcg_workflowtask_.jmcg_viewnotificationentitytype);
+                        if (string.IsNullOrWhiteSpace(viewNotificationEntityType))
+                        {
+                            throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationentitytype)));
+                        }
+
                         var notificationSenderQueue = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom);
                         if (!notificationSenderQueue.HasValue)
                         {

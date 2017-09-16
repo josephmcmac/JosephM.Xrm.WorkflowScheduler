@@ -440,6 +440,17 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             var workflowActivity = InitialiseValidWorkflowTask();
             workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, null);
             workflowActivity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype, OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification);
+            //email sender required
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationentitytype, null);
+            try
+            {
+                workflowActivity = CreateAndRetrieve(workflowActivity);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
             workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_viewnotificationentitytype, Entities.account);
             //email sender required
             workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, null);
