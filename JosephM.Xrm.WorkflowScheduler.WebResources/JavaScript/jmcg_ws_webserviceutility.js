@@ -25,6 +25,43 @@ WsServiceUtility = function () {
         GreaterThan: "GreaterThan",
         Null: "Null",
         NotNull: "NotNull"
+        };
+
+    this.GetAllEntityMetadata = function (asyncCallback, onError) {
+        var executerequestxml = '      <request i:type="a:RetrieveAllEntitiesRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts">';
+        executerequestxml = executerequestxml + '<a:Parameters xmlns:b="http://schemas.datacontract.org/2004/07/System.Collections.Generic">';
+        executerequestxml = executerequestxml + '<a:KeyValuePairOfstringanyType>';
+        executerequestxml = executerequestxml + '<b:key>EntityFilters</b:key>';
+        executerequestxml = executerequestxml + '<b:value i:type="c:EntityFilters" xmlns:c="http://schemas.microsoft.com/xrm/2011/Metadata">Entity</b:value>';
+        executerequestxml = executerequestxml + '</a:KeyValuePairOfstringanyType>';
+        executerequestxml = executerequestxml + '<a:KeyValuePairOfstringanyType>';
+        executerequestxml = executerequestxml + '<b:key>RetrieveAsIfPublished</b:key>';
+        executerequestxml = executerequestxml + '<b:value i:type="c:boolean" xmlns:c="http://www.w3.org/2001/XMLSchema">false</b:value>';
+        executerequestxml = executerequestxml + '</a:KeyValuePairOfstringanyType>';
+        executerequestxml = executerequestxml + '</a:Parameters>';
+        executerequestxml = executerequestxml + '<a:RequestId i:nil="true" />';
+        executerequestxml = executerequestxml + '<a:RequestName>RetrieveAllEntities</a:RequestName>';
+        executerequestxml = executerequestxml + '</request>';
+
+        if (asyncCallback != null) {
+            function processResponseData(data) {
+                var results = new Array();
+                var entityNodes = XrmElementsByTagName(XrmFind(XrmFind(data, 'Results')[0], 'KeyValuePairOfstringanyType')[0], 'EntityMetadata');
+                for (var i = 0; i < entityNodes.length; i++) {
+                    var thisEntity = new Object();
+                    var blah = entityNodes[i];
+                    var blah2 = XrmElementsByTagName(entityNodes[i], 'LogicalName');
+                    thisEntity.LogicalName = XrmInnerText(XrmElementsByTagName(entityNodes[i], 'LogicalName')[0]);
+                    thisEntity.DisplayName = XrmInnerText(XrmElementsByTagName(entityNodes[i], 'LogicalName')[0]);
+                    results.push(thisEntity);
+                }
+                asyncCallback(results);
+            }
+            ExecuteRequest(executerequestxml, processResponseData, onError);
+
+        } else {
+            return ExecuteRequest(executerequestxml, null);
+        }
     };
     
     this.RetrieveMultipleAsync = function (entityType, fields, conditions, orders, asyncCallback, onError) {

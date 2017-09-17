@@ -16,7 +16,8 @@ wsWorkflowTasks.RunOnLoad = function() {
     wsPageUtility.CommonForm(wsWorkflowTasks.RunOnChange, wsWorkflowTasks.RunOnSave);
     wsWorkflowTasks.RefreshVisibility();
     wsWorkflowTasks.PopulateViewSelectionList();
-    wsWorkflowTasks.PopulateUrlField();
+    wsWorkflowTasks.InitialiseFields();
+    wsWorkflowTasks.LoadTypes();
 }
 
 wsWorkflowTasks.RunOnChange = function (fieldName) {
@@ -24,6 +25,7 @@ wsWorkflowTasks.RunOnChange = function (fieldName) {
         case "jmcg_workflowexecutiontype":
             wsWorkflowTasks.RefreshVisibility();
             wsWorkflowTasks.PopulateViewSelectionList();
+            wsWorkflowTasks.LoadTypes();
             break;
         case "jmcg_targetworkflow":
             wsWorkflowTasks.PopulateViewSelectionList();
@@ -38,6 +40,9 @@ wsWorkflowTasks.RunOnChange = function (fieldName) {
             break; 
         case "jmcg_viewnotificationoption":
             wsWorkflowTasks.RefreshVisibility();
+            break;
+        case "jmcg_viewnotificationentitytypeselectionfield":
+            wsWorkflowTasks.SetEntitySelection();
             break;
     }
 }
@@ -91,6 +96,14 @@ wsWorkflowTasks.PopulateViewSelectionList = function () {
     //todo could do something while loading/changing the view selections
 
     var processViewResults = function (views) {
+        function compare(a, b) {
+            if (a.name < b.name)
+                return -1;
+            if (a.name > b.name)
+                return 1;
+            return 0;
+        }
+        views.sort(compare);
         wsWorkflowTasks.ViewSelections = views;
         var viewoptions = new Array();
         viewoptions.push(new wsPageUtility.PicklistOption(0, "Select to change the selected view"));
@@ -144,14 +157,60 @@ wsWorkflowTasks.PopulateViewSelectionList = function () {
     }
 }
 
-wsWorkflowTasks.PopulateUrlField = function () {
+wsWorkflowTasks.InitialiseFields = function () {
     var processResults = function (results) {
         if (results.length > 0) {
+            debugger;
             wsPageUtility.SetFieldValue("jmcg_crmbaseurl", results[0]["jmcg_crmbaseurl"]);
+            if (results[0]["jmcg_sendfailurenotificationsfrom"] != null) {
+                var fieldValue = results[0]["jmcg_sendfailurenotificationsfrom"];
+                wsPageUtility.SetLookupField("jmcg_sendfailurenotificationsfrom", fieldValue.type, fieldValue.id, fieldValue.name);
+            }
+            if (results[0]["jmcg_sendfailurenotificationsto"] != null) {
+                var fieldValue = results[0]["jmcg_sendfailurenotificationsto"];
+                wsPageUtility.SetLookupField("jmcg_sendfailurenotificationsto", fieldValue.type, fieldValue.id, fieldValue.name);
+            }
         }
     }
     if (wsPageUtility.GetFormType() == wsPageUtility.FormMode.Create) {
-        var condition = new wsServiceUtility.FilterCondition("jmcg_crmbaseurl", wsServiceUtility.FilterOperator.NotNull);
-        wsServiceUtility.RetrieveMultipleAsync("jmcg_workflowtask", "jmcg_crmbaseurl", [condition], null, processResults);
+        wsServiceUtility.RetrieveMultipleAsync("jmcg_workflowtask", "jmcg_crmbaseurl,jmcg_sendfailurenotificationsfrom,jmcg_sendfailurenotificationsto", null, null, processResults);
+    }
+}
+
+wsWorkflowTasks.EntityTypes = null;
+wsWorkflowTasks.LoadTypes = function () {
+    var isViewNotification = wsPageUtility.GetFieldValue("jmcg_workflowexecutiontype") == wsWorkflowTasks.Options.WorkflowExecutionType.ViewNotification;
+    if (isViewNotification && wsWorkflowTasks.EntityTypes == null) {
+        function compare(a, b) {
+            if (a.DisplayName < b.DisplayName)
+                return -1;
+            if (a.DisplayName > b.DisplayName)
+                return 1;
+            return 0;
+        }
+
+        var processResults = function (results) {
+            results.sort(compare);
+            wsWorkflowTasks.EntityTypes = results;
+            var entityOptions = new Array();
+            entityOptions.push(new wsPageUtility.PicklistOption(0, "Select to change the selected entity type"));
+            for (var i = 1; i <= wsWorkflowTasks.EntityTypes.length; i++) {
+                entityOptions.push(new wsPageUtility.PicklistOption(i, wsWorkflowTasks.EntityTypes[i - 1]["DisplayName"]));
+            }
+            wsPageUtility.SetPicklistOptions("jmcg_viewnotificationentitytypeselectionfield", entityOptions);
+            wsPageUtility.SetFieldValue("jmcg_viewnotificationentitytypeselectionfield", 0);
+        }
+        wsServiceUtility.GetAllEntityMetadata(processResults);
+    }
+}
+
+wsWorkflowTasks.SetEntitySelection = function () {
+    var selectedoption = Xrm.Page.getAttribute("jmcg_viewnotificationentitytypeselectionfield").getSelectedOption();
+    if (selectedoption != null && parseInt(selectedoption.value) != 0) {
+        var value = selectedoption.value;
+        var selectedEntity = wsWorkflowTasks.EntityTypes[parseInt(value) - 1];
+        var selectedEntityName = selectedEntity["LogicalName"];
+        wsPageUtility.SetFieldValue("jmcg_viewnotificationentitytype", selectedEntityName);
+        wsPageUtility.SetFieldValue("jmcg_viewnotificationentitytypeselectionfield", 0);
     }
 }
