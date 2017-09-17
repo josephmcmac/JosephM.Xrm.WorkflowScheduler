@@ -94,7 +94,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             var workflowLink = lastFailedJobQuery.AddLink(Entities.workflow, Fields.asyncoperation_.workflowactivationid,
                 Fields.workflow_.workflowid);
             workflowLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.workflow_.parentworkflowid, ConditionOperator.Equal, targetWorkflow));
-            return XrmService.RetrieveFirstX(lastFailedJobQuery, HtmlEmailGenerator.MaximumNumberOfEntitiesToList);
+            return XrmService.RetrieveFirstX(lastFailedJobQuery, HtmlEmailGenerator.MaximumNumberOfEntitiesToList + 1); //add 1 to determine if exceeded the limit
         }
 
         private IEnumerable<string> GetFieldsToDisplayInNotificationEmail()

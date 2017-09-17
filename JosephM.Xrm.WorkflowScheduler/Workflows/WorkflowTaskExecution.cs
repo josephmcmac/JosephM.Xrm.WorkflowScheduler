@@ -149,7 +149,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         //ensure owner has email
                         var ownerLink = query.AddLink(Entities.systemuser, "ownerid", Fields.systemuser_.systemuserid);
                         ownerLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.systemuser_.internalemailaddress, ConditionOperator.NotNull));
-                        var recordsForReminder = XrmService.RetrieveAll(query);
+                        var recordsForReminder = XrmService.RetrieveAll(query); //get all as results for multiple owners
                         var usersToNotifyIds = new List<Guid>();
                         foreach(var item in recordsForReminder)
                         {
@@ -172,7 +172,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                     }
                 case OptionSets.WorkflowTask.ViewNotificationOption.EmailQueue:
                     {
-                        var recordsForReminder = XrmService.RetrieveAll(query);
+                        var recordsForReminder = XrmService.RetrieveFirstX(query, HtmlEmailGenerator.MaximumNumberOfEntitiesToList + 1); //add 1 to determine if exceeded the limit
                         var recipientQueue = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue);
                         if(!recipientQueue.HasValue)
                             throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TargetType), XrmService.GetEntityLabel(TargetType)));
