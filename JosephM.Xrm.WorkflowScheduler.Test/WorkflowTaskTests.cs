@@ -14,6 +14,66 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
     public class WorkflowTaskTests : JosephMXrmTest
     {
         /// <summary>
+        /// Vaslidates erros thrown when the jmcg_crmbaseurl field does not have a valid value
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskValidateUrlTest()
+        {
+            var workflowTask = InitialiseValidWorkflowTask();
+            var validUrlSettingsFieldValue = workflowTask.GetStringField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+            Assert.IsNotNull(validUrlSettingsFieldValue);
+            var split = validUrlSettingsFieldValue.Split('.');
+            Assert.AreEqual(2, split.Count());
+            Assert.IsTrue(XrmService.IsString(split.ElementAt(1), split.First()));
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, "BlahBlah");
+            try
+            {
+                workflowTask = CreateAndRetrieve(workflowTask);
+                Assert.Fail();
+            }
+            catch(Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, "https://url");
+            workflowTask = CreateAndRetrieve(workflowTask);
+
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, "NotAnEntity.NotAField");
+            try
+            {
+                workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, Entities.account + ".NotAField");
+            try
+            {
+                workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, Entities.account + "." + Fields.account_.createdon);
+            try
+            {
+                workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, validUrlSettingsFieldValue);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+        }
+
+        /// <summary>
         /// Verifies continuous workflow not started, started or killed for change of On value
         /// </summary>
         [TestMethod]
@@ -40,6 +100,9 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
         {
             var workflowTask = InitialiseValidWorkflowTask();
             workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, GetTargetAccountWorkflow());
+            //queues required when sending
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, null);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, null);
             workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, true);
             try
             {

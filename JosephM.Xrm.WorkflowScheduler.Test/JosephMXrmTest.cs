@@ -61,6 +61,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
                 OptionSets.WorkflowTask.WorkflowExecutionType.TargetThisWorkflowTask);
             entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_periodperrununit,
                 OptionSets.WorkflowTask.PeriodPerRunUnit.Days);
+            entity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            entity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TestQueue);
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_periodperrunamount, 1);
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddMinutes(-10));
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);

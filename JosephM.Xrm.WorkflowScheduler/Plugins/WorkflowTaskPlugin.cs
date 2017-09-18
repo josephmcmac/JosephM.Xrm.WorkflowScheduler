@@ -22,12 +22,48 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             TurnOffIfDeactivated();
             VerifyPeriod();
             ValidateTarget();
+            ValidateCrmUrlField();
             VerifyRequiredFields();
             SpawnOrTurnOffRecurrance();
             ValidateNotifications();
             ResetThresholdsWhenMonitorTurnedOn();
             SpawnMonitorInstance();
             SetViewName();
+        }
+
+        private void ValidateCrmUrlField()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
+            {
+                if (FieldChanging(Fields.jmcg_workflowtask_.jmcg_crmbaseurl))
+                {
+                    var fieldValue = GetStringField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+                    if(!string.IsNullOrWhiteSpace(fieldValue))
+                    {
+                        try
+                        {
+                            if(!fieldValue.StartsWith("http"))
+                            {
+                                var split = fieldValue.Split('.');
+                                if(split.Count() != 2)
+                                {
+                                    throw new Exception(string.Format("Value '{0}' Does Not Split By '.' Character Into 2 Strings", fieldValue));
+                                }
+                                var type = split.First();
+                                var field = split.ElementAt(1);
+                                if (!XrmService.IsString(field, type))
+                                {
+                                    throw new Exception(string.Format("Field {0} In Type {1} Is Not Of String Type", field, type));
+                                }
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            throw new InvalidPluginExecutionException(string.Format("The Field {0} Is Not Valid: {1}. It Needs To Be A URL String Beginning With 'http' Or A Reference To A String Field In A Settings Entity Formatted 'entitytype.fieldname'", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_crmbaseurl), ex.Message), ex);
+                        }
+                    }
+                }
+            }
         }
 
         private void VerifyRequiredFields()
