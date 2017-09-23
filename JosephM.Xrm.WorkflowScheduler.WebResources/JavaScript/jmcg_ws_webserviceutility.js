@@ -7,6 +7,8 @@ if (typeof Xrm === 'undefined')
 
 WsServiceUtility = function () {
     var that = this;
+    var EntityMetadata = null;
+
     this.FieldType =
     {
         Lookup: "EntityReference",
@@ -28,39 +30,62 @@ WsServiceUtility = function () {
         };
 
     this.GetAllEntityMetadata = function (asyncCallback, onError) {
-        var executerequestxml = '      <request i:type="a:RetrieveAllEntitiesRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts">';
-        executerequestxml = executerequestxml + '<a:Parameters xmlns:b="http://schemas.datacontract.org/2004/07/System.Collections.Generic">';
-        executerequestxml = executerequestxml + '<a:KeyValuePairOfstringanyType>';
-        executerequestxml = executerequestxml + '<b:key>EntityFilters</b:key>';
-        executerequestxml = executerequestxml + '<b:value i:type="c:EntityFilters" xmlns:c="http://schemas.microsoft.com/xrm/2011/Metadata">Entity</b:value>';
-        executerequestxml = executerequestxml + '</a:KeyValuePairOfstringanyType>';
-        executerequestxml = executerequestxml + '<a:KeyValuePairOfstringanyType>';
-        executerequestxml = executerequestxml + '<b:key>RetrieveAsIfPublished</b:key>';
-        executerequestxml = executerequestxml + '<b:value i:type="c:boolean" xmlns:c="http://www.w3.org/2001/XMLSchema">false</b:value>';
-        executerequestxml = executerequestxml + '</a:KeyValuePairOfstringanyType>';
-        executerequestxml = executerequestxml + '</a:Parameters>';
-        executerequestxml = executerequestxml + '<a:RequestId i:nil="true" />';
-        executerequestxml = executerequestxml + '<a:RequestName>RetrieveAllEntities</a:RequestName>';
-        executerequestxml = executerequestxml + '</request>';
+        if (that.EntityMetadata != null)
+            asyncCallback(that.EntityMetadata);
+        else {
 
-        if (asyncCallback != null) {
-            function processResponseData(data) {
-                var results = new Array();
-                var entityNodes = XrmElementsByTagName(XrmFind(XrmFind(data, 'Results')[0], 'KeyValuePairOfstringanyType')[0], 'EntityMetadata');
-                for (var i = 0; i < entityNodes.length; i++) {
-                    var thisEntity = new Object();
-                    var blah = entityNodes[i];
-                    var blah2 = XrmElementsByTagName(entityNodes[i], 'LogicalName');
-                    thisEntity.LogicalName = XrmInnerText(XrmElementsByTagName(entityNodes[i], 'LogicalName')[0]);
-                    thisEntity.DisplayName = XrmInnerText(XrmElementsByTagName(entityNodes[i], 'LogicalName')[0]);
-                    results.push(thisEntity);
+            var executerequestxml = '      <request i:type="a:RetrieveAllEntitiesRequest" xmlns:a="http://schemas.microsoft.com/xrm/2011/Contracts">';
+            executerequestxml = executerequestxml + '<a:Parameters xmlns:b="http://schemas.datacontract.org/2004/07/System.Collections.Generic">';
+            executerequestxml = executerequestxml + '<a:KeyValuePairOfstringanyType>';
+            executerequestxml = executerequestxml + '<b:key>EntityFilters</b:key>';
+            executerequestxml = executerequestxml + '<b:value i:type="c:EntityFilters" xmlns:c="http://schemas.microsoft.com/xrm/2011/Metadata">Entity</b:value>';
+            executerequestxml = executerequestxml + '</a:KeyValuePairOfstringanyType>';
+            executerequestxml = executerequestxml + '<a:KeyValuePairOfstringanyType>';
+            executerequestxml = executerequestxml + '<b:key>RetrieveAsIfPublished</b:key>';
+            executerequestxml = executerequestxml + '<b:value i:type="c:boolean" xmlns:c="http://www.w3.org/2001/XMLSchema">false</b:value>';
+            executerequestxml = executerequestxml + '</a:KeyValuePairOfstringanyType>';
+            executerequestxml = executerequestxml + '</a:Parameters>';
+            executerequestxml = executerequestxml + '<a:RequestId i:nil="true" />';
+            executerequestxml = executerequestxml + '<a:RequestName>RetrieveAllEntities</a:RequestName>';
+            executerequestxml = executerequestxml + '</request>';
+
+            if (asyncCallback != null) {
+                function processResponseData(data) {
+                    var results = new Array();
+                    var entityNodes = XrmElementsByTagName(XrmFind(XrmFind(data, 'Results')[0], 'KeyValuePairOfstringanyType')[0], 'EntityMetadata');
+                    for (var i = 0; i < entityNodes.length; i++) {
+                        var thisEntity = new Object();
+                        thisEntity.LogicalName = null;
+                        var entityNode = entityNodes[i];
+                        var logicalNameNode = XrmElementsByTagName(entityNode, 'LogicalName');
+                        if (logicalNameNode.length > 0)
+                            thisEntity.LogicalName = XrmInnerText(logicalNameNode[0]);
+                        thisEntity.DisplayName = thisEntity.LogicalName;
+                        var labelNode = XrmElementsByTagName(entityNode, 'displayname');
+                        if (labelNode.length > 0) {
+                            var userLocalised = XrmFind(labelNode[0], "userlocalizedlabel");
+                            if (userLocalised.length > 0) {
+                                var localLabel = XrmFind(userLocalised[0], "label")
+                                if (localLabel.length > 0) {
+                                    thisEntity.DisplayName = XrmInnerText(localLabel[0]);
+                                }
+                            }
+                        }
+                        thisEntity.IsValidForAdvanceFind = false;
+                        var isValidNode = XrmElementsByTagName(entityNode, 'isvalidforadvancedfind');
+                        if (isValidNode.length > 0)
+                            thisEntity.IsValidForAdvanceFind = XrmInnerText(isValidNode[0]) != "false";
+                        if (thisEntity.LogicalName && thisEntity.IsValidForAdvanceFind)
+                            results.push(thisEntity);
+                    }
+                    that.EntityMetadata = results;
+                    asyncCallback(results);
                 }
-                asyncCallback(results);
-            }
-            ExecuteRequest(executerequestxml, processResponseData, onError);
+                ExecuteRequest(executerequestxml, processResponseData, onError);
 
-        } else {
-            return ExecuteRequest(executerequestxml, null);
+            } else {
+                return ExecuteRequest(executerequestxml, null);
+            }
         }
     };
     
