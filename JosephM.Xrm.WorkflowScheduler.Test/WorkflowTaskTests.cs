@@ -554,8 +554,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_targetviewid, testView.Id.ToString());
             workflowActivity = CreateAndRetrieve(workflowActivity);
             Assert.AreEqual(testViewName, workflowActivity.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname));
-            //var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
-            //instance.DoIt(true);
+            var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
+            instance.DoIt(true);
 
             WaitTillTrue(() => GetRegardingEmails(workflowActivity).Count() == 2, 60);
             var emails = GetRegardingEmails(workflowActivity);

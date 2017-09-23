@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Xrm.Sdk;
 using JosephM.Xrm.WorkflowScheduler.Extentions;
 using JosephM.Xrm.WorkflowScheduler.Services;
+using System;
 
 namespace JosephM.Xrm.WorkflowScheduler.Emails
 {
@@ -43,7 +44,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             }
         }
 
-        public void AppendTable(IEnumerable<Entity> take, LocalisationService localisationService, IEnumerable<string> fields = null, bool noHyperLinks = false, string appId = null)
+        public void AppendTable(IEnumerable<Entity> take, LocalisationService localisationService, IEnumerable<string> fields = null, IDictionary<string, string> aliasTypeMaps = null, bool noHyperLinks = false, string appId = null)
         {
             if (!take.Any())
                 return;
@@ -59,7 +60,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             if (fields == null)
                 fields = new[] { XrmService.GetPrimaryNameField(firstItem.LogicalName) };
             foreach (var field in fields)
-                AppendThForField(table, firstItem, field);
+                AppendThForField(table, firstItem, field, aliasTypeMaps);
             table.AppendLine("</tr></thead>");
             foreach (var item in take.Take(MaximumNumberOfEntitiesToList))
             {
@@ -73,7 +74,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
                 }
 
                 foreach (var field in fields)
-                    AppendTdForField(table, item, field, localisationService);
+                    AppendTdForField(table, item, field, localisationService, aliasTypeMaps);
                 table.AppendLine("</tr>");
             }
             table.AppendLine("</table>");
@@ -92,17 +93,46 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
                 item.LogicalName, item.Id);
         }
 
-        private void AppendThForField(StringBuilder table, Entity firstItem, string field)
+        private void AppendThForField(StringBuilder table, Entity firstItem, string field, IDictionary<string, string> aliasTypeMaps)
         {
-            var path = XrmService.GetTypeFieldPath(field, firstItem.LogicalName);
-            table.AppendLine(string.Format("<th {0}>{1}</th>", thStyle, XrmService.GetFieldLabel(path.Last().Value, path.Last().Key)));
+            var tf = GetTypeAndField(firstItem, field, aliasTypeMaps);
+            table.AppendLine(string.Format("<th {0}>{1}</th>", thStyle, XrmService.GetFieldLabel(tf.Field, tf.Type)));
         }
 
-        private void AppendTdForField(StringBuilder table, Entity item, string field, LocalisationService localisationService)
+        private TypeAndField GetTypeAndField(Entity entity, string field, IDictionary<string, string> aliasTypeMaps)
         {
-            var path = XrmService.GetTypeFieldPath(field, item.LogicalName);
+            var entityType = entity.LogicalName;
+            if (field.Contains('.'))
+            {
+                var split = field.Split('.');
+                var alias = split.First();
+                if (aliasTypeMaps == null || !aliasTypeMaps.ContainsKey(alias))
+                {
+                    throw new Exception(string.Format("Cannot Determine Field's Entity Type. The Field {0} Has An Alias Prefix But The Method Argument {1} Does Not Contain A Map To The Entity Type", field, nameof(aliasTypeMaps)));
+                }
+                entityType = aliasTypeMaps[alias];
+                field = split.ElementAt(1);
+            }
+            return new TypeAndField(entityType, field);
+        }
+
+        private class TypeAndField
+        {
+            public string Type { get; set; }
+            public string Field { get; set; }
+
+            public TypeAndField(string type, string field)
+            {
+                Type = type;
+                Field = field;
+            }
+        }
+
+        private void AppendTdForField(StringBuilder table, Entity item, string field, LocalisationService localisationService, IDictionary<string, string> aliasTypeMaps)
+        {
+            var tf = GetTypeAndField(item, field, aliasTypeMaps);
             table.AppendLine(string.Format("<td {0}>", tdStyle));
-            table.Append(XrmService.GetFieldAsDisplayString(path.Last().Key, path.Last().Value, item.GetFieldValue(field), localisationService.TimeZonename));
+            table.Append(XrmService.GetFieldAsDisplayString(tf.Type, tf.Field, item.GetFieldValue(field), localisationService.TimeZonename));
             table.AppendLine("</td>");
         }
 

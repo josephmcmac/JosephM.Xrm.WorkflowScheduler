@@ -126,9 +126,35 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             return query;
         }
 
+        private void AppendAliasTypeMaps(LinkEntity linkEntity, Dictionary<string, string> aliasTypeMaps)
+        {
+            if (linkEntity != null)
+            {
+                if(!string.IsNullOrWhiteSpace(linkEntity.EntityAlias) && !aliasTypeMaps.ContainsKey(linkEntity.EntityAlias))
+                {
+                    aliasTypeMaps.Add(linkEntity.EntityAlias, linkEntity.LinkToEntityName);
+                }
+                if (linkEntity.LinkEntities != null)
+                {
+                    foreach(var link in linkEntity.LinkEntities)
+                    {
+                        AppendAliasTypeMaps(link, aliasTypeMaps);
+                    }
+                }
+            }
+        }
+
         private void SendViewNotifications(Entity target)
         {
             var query = GetViewFetchAsQuery();
+            var aliasTypeMaps = new Dictionary<string, string>();
+            if(query.LinkEntities != null)
+            {
+                foreach (var link in query.LinkEntities)
+                {
+                    AppendAliasTypeMaps(link, aliasTypeMaps);
+                }
+            }
 
             var sendOption = target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption);
             switch(sendOption)
@@ -173,7 +199,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                             var thisDudesRecords = recordsForReminder
                                 .Where(r => r.GetLookupGuid("ownerid") == userId)
                                 .ToArray();
-                            SendViewNotificationEmailWithTable(Entities.systemuser, userId, thisDudesRecords, localisationService);
+                            SendViewNotificationEmailWithTable(Entities.systemuser, userId, thisDudesRecords, localisationService, aliasTypeMaps);
                         }
                         break;
                     }
@@ -183,7 +209,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         var recipientQueue = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue);
                         if(!recipientQueue.HasValue)
                             throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TargetType), XrmService.GetEntityLabel(TargetType)));
-                        SendViewNotificationEmailWithTable(Entities.queue, recipientQueue.Value, recordsForReminder, LocalisationService);
+                        SendViewNotificationEmailWithTable(Entities.queue, recipientQueue.Value, recordsForReminder, LocalisationService, aliasTypeMaps);
                         break;
                     }
             }
@@ -217,7 +243,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             }
         }
 
-        public void SendViewNotificationEmailWithTable(string recipientType, Guid recipientId, IEnumerable<Entity> recordsToList, LocalisationService localisationService)
+        public void SendViewNotificationEmailWithTable(string recipientType, Guid recipientId, IEnumerable<Entity> recordsToList, LocalisationService localisationService, IDictionary<string, string> aliasTypeMaps)
         {
             if (recordsToList.Any())
             {
@@ -232,7 +258,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 //                <p {0}>{2}</p>", pStyle, View.GetStringField(Fields.savedquery_.name), viewHyperlink);
                 //exlude primary key and fields in linked entities in list because label
                 var fieldsForTable = GetViewLayoutcellFieldNames()
-                    .Where(s => s.IndexOf(".") == -1)
                     .Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) })
                     .ToList();
                 if(isToOwner && fieldsForTable.Contains("ownerid"))
@@ -243,7 +268,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
                     , isToOwner ? "that you own" : "there are"
                     , View.GetStringField(Fields.savedquery_.name)));
-                email.AppendTable(recordsToList, localisationService, fields: fieldsForTable);
+                email.AppendTable(recordsToList, localisationService, fields: fieldsForTable, aliasTypeMaps: aliasTypeMaps);
                 var viewName = View.GetStringField(Fields.savedquery_.name);
                 var subject = viewName + " Notification";
                 SendNotificationEmail(recipientType, recipientId, subject, email.GetContent());
