@@ -187,7 +187,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                             }
                         }
                         usersToNotifyIds = usersToNotifyIds.Distinct().ToList();
-                        //todo get user time zones and pass thorugh for date strings
                         var userTimeZones = IndexUserTimeZones(usersToNotifyIds);
 
                         foreach (var userId in usersToNotifyIds)
@@ -378,8 +377,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
 
                 var calendarRules = XrmService.RetrieveAll(query);
 
-                //todo consider cast to datetime
-                //todo not actually utc really
                 _closureTimes = calendarRules
                     .Select(c => new KeyValuePair<DateTime, DateTime>(
                         LocalisationService.ChangeUtcToLocal((DateTime)c.GetFieldValue("CR." + Fields.calendarrule_.starttime)),
