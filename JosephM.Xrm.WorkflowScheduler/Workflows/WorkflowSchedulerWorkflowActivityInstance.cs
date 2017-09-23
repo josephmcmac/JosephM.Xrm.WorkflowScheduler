@@ -50,20 +50,23 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             XrmService.SendEmail(emailId);
         }
 
+        private string _crmUrl;
         public string GetCrmURL()
         {
-            var baseUrl = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
-            if (baseUrl != null && !baseUrl.StartsWith("http") && baseUrl.Contains("."))
+            if (_crmUrl == null)
             {
-                var split = baseUrl.Split('.');
-                var type = split.First();
-                var field = split.ElementAt(1);
-                var query = XrmService.BuildSourceQuery(type, new[] { field });
-                var firstRecord = XrmService.RetrieveFirst(query);
-                baseUrl = firstRecord.GetStringField(field);
+                _crmUrl = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl);
+                if (_crmUrl != null && !_crmUrl.StartsWith("http") && _crmUrl.Contains("."))
+                {
+                    var split = _crmUrl.Split('.');
+                    var type = split.First();
+                    var field = split.ElementAt(1);
+                    var query = XrmService.BuildSourceQuery(type, new[] { field });
+                    var firstRecord = XrmService.RetrieveFirst(query);
+                    _crmUrl = firstRecord.GetStringField(field);
+                }
             }
-
-            return baseUrl;
+            return _crmUrl;
         }
 
         private Guid GetNotificationSendingQueue()
@@ -72,6 +75,52 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             if (!queueId.HasValue)
                 throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TargetType), XrmService.GetEntityLabel(TargetType)));
             return queueId.Value;
+        }
+
+        private int? _userTimeZoneCode;
+        private int UserTimeZoneCode
+        {
+            get
+            {
+                if (!_userTimeZoneCode.HasValue)
+                {
+                    var userSettings = XrmService.GetFirst(Entities.usersettings, Fields.usersettings_.systemuserid, CurrentUserId, new[] { Fields.usersettings_.timezonecode });
+                    if (userSettings == null)
+                        throw new NullReferenceException(string.Format("Error getting {0} for user ", XrmService.GetEntityLabel(Entities.usersettings)));
+                    if (userSettings.GetField(Fields.usersettings_.timezonecode) == null)
+                        throw new NullReferenceException(string.Format("Error {0} is empty in the {1} record", XrmService.GetFieldLabel(Fields.usersettings_.timezonecode, Entities.usersettings), XrmService.GetEntityLabel(Entities.usersettings)));
+
+
+                    _userTimeZoneCode = userSettings.GetInt(Fields.usersettings_.timezonecode);
+                }
+                return _userTimeZoneCode.Value;
+            }
+        }
+
+        private Entity _timeZone;
+        private Entity TimeZone
+        {
+            get
+            {
+                if (_timeZone == null)
+                {
+                    _timeZone = XrmService.GetFirst(Entities.timezonedefinition, Fields.timezonedefinition_.timezonecode, UserTimeZoneCode, new[] { Fields.timezonedefinition_.standardname });
+                }
+                return _timeZone;
+            }
+        }
+
+        private LocalisationService _localisationService;
+        public LocalisationService LocalisationService
+        {
+            get
+            {
+                if (_localisationService == null)
+                {
+                    _localisationService = new LocalisationService(new LocalisationSettings(TimeZone.GetStringField(Fields.timezonedefinition_.standardname)));
+                }
+                return _localisationService;
+            }
         }
     }
 }

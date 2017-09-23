@@ -62,14 +62,14 @@ wsWorkflowTasks.RefreshVisibility = function () {
     var displayViewSelectForViewTarget = isViewTarget && isTargetWorkflowSelected;
     var displayViewSelectForViewNotifications = isViewNotification && isViewNotificationEntityTypeEntered;
 
+    wsPageUtility.SetFieldVisibility("jmcg_sendnotificationfortargetfailures", typeSelected && !isViewNotification);
+    wsPageUtility.SetFieldVisibility("jmcg_targetworkflow", typeSelected && !isViewNotification);
+    wsPageUtility.SetFieldVisibility("jmcg_viewnotificationqueue", isViewNotificationToQueue);
+
     wsPageUtility.SetSectionVisibility("secViewNotification", isViewNotification);
     wsPageUtility.SetSectionVisibility("secFetchTarget", isFetchTarget);
     wsPageUtility.SetSectionVisibility("secViewTarget", isViewTarget);
     wsPageUtility.SetSectionVisibility("secViewSelection", displayViewSelectForViewTarget || displayViewSelectForViewNotifications);
-
-    wsPageUtility.SetFieldVisibility("jmcg_sendnotificationfortargetfailures", typeSelected && !isViewNotification);
-    wsPageUtility.SetFieldVisibility("jmcg_targetworkflow", typeSelected && !isViewNotification);
-    wsPageUtility.SetFieldVisibility("jmcg_viewnotificationqueue", isViewNotificationToQueue);
 }
 
 wsWorkflowTasks.SetViewSelection = function () {

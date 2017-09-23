@@ -59,5 +59,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
             convert = convert.Subtract(difference);
             return convert;
         }
+
+        public string TimeZonename
+        {
+            get { return LocalisationSettings.TargetTimeZoneId; }
+        }
     }
 }

@@ -161,12 +161,19 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                             }
                         }
                         usersToNotifyIds = usersToNotifyIds.Distinct().ToList();
+                        //todo get user time zones and pass thorugh for date strings
+                        var userTimeZones = IndexUserTimeZones(usersToNotifyIds);
+
                         foreach (var userId in usersToNotifyIds)
                         {
+                            var localisationService = userTimeZones.ContainsKey(userId)
+                                ? new LocalisationService(new LocalisationSettings(userTimeZones[userId]))
+                                : LocalisationService;
+
                             var thisDudesRecords = recordsForReminder
                                 .Where(r => r.GetLookupGuid("ownerid") == userId)
                                 .ToArray();
-                            SendViewNotificationEmailWithTable(Entities.systemuser, userId, thisDudesRecords);
+                            SendViewNotificationEmailWithTable(Entities.systemuser, userId, thisDudesRecords, localisationService);
                         }
                         break;
                     }
@@ -176,10 +183,26 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         var recipientQueue = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue);
                         if(!recipientQueue.HasValue)
                             throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TargetType), XrmService.GetEntityLabel(TargetType)));
-                        SendViewNotificationEmailWithTable(Entities.queue, recipientQueue.Value, recordsForReminder);
+                        SendViewNotificationEmailWithTable(Entities.queue, recipientQueue.Value, recordsForReminder, LocalisationService);
                         break;
                     }
             }
+        }
+
+        private IDictionary<Guid, string> IndexUserTimeZones(List<Guid> usersToNotifyIds)
+        {
+            var linkEntity = new LinkEntity(Entities.systemuser, Entities.usersettings, Fields.systemuser_.systemuserid, Fields.usersettings_.systemuserid, JoinOperator.Inner);
+            var tzLink = linkEntity.AddLink(Entities.timezonedefinition, Fields.usersettings_.timezonecode, Fields.timezonedefinition_.timezonecode);
+            tzLink.EntityAlias = "TZ";
+            tzLink.Columns = XrmService.CreateColumnSet(new[] { Fields.timezonedefinition_.standardname });
+
+            var users = XrmService.RetrieveAllOrClauses(Entities.systemuser
+                , usersToNotifyIds.Select(uid => new ConditionExpression(Fields.systemuser_.systemuserid, ConditionOperator.Equal, uid))
+                , new string[0]
+                , linkEntity);
+
+            return users
+                .ToDictionary(u => u.Id, u => (string)u.GetFieldValue("TZ." + Fields.timezonedefinition_.standardname));
         }
 
         private void RemoveAllFields(LinkEntity link)
@@ -194,7 +217,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             }
         }
 
-        public void SendViewNotificationEmailWithTable(string recipientType, Guid recipientId, IEnumerable<Entity> recordsToList)
+        public void SendViewNotificationEmailWithTable(string recipientType, Guid recipientId, IEnumerable<Entity> recordsToList, LocalisationService localisationService)
         {
             if (recordsToList.Any())
             {
@@ -220,8 +243,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
                     , isToOwner ? "that you own" : "there are"
                     , View.GetStringField(Fields.savedquery_.name)));
-                email.AppendTable(recordsToList, fields: fieldsForTable);
-
+                email.AppendTable(recordsToList, localisationService, fields: fieldsForTable);
                 var viewName = View.GetStringField(Fields.savedquery_.name);
                 var subject = viewName + " Notification";
                 SendNotificationEmail(recipientType, recipientId, subject, email.GetContent());
@@ -345,52 +367,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
         private DateTime ConvertToUserLocal(DateTime executionTime)
         {
             return LocalisationService.ConvertToTargetTime(executionTime);
-        }
-
-        private int? _userTimeZoneCode;
-        private int UserTimeZoneCode
-        {
-            get
-            {
-                if (!_userTimeZoneCode.HasValue)
-                {
-                    var userSettings = XrmService.GetFirst(Entities.usersettings, Fields.usersettings_.systemuserid, CurrentUserId, new[] { Fields.usersettings_.timezonecode });
-                    if (userSettings == null)
-                        throw new NullReferenceException(string.Format("Error getting {0} for user ", XrmService.GetEntityLabel(Entities.usersettings)));
-                    if (userSettings.GetField(Fields.usersettings_.timezonecode) == null)
-                        throw new NullReferenceException(string.Format("Error {0} is empty in the {1} record", XrmService.GetFieldLabel(Fields.usersettings_.timezonecode, Entities.usersettings), XrmService.GetEntityLabel(Entities.usersettings)));
-
-
-                    _userTimeZoneCode = userSettings.GetInt(Fields.usersettings_.timezonecode);
-                }
-                return _userTimeZoneCode.Value;
-            }
-        }
-
-        private Entity _timeZone;
-        private Entity TimeZone
-        {
-            get
-            {
-                if (_timeZone == null)
-                {
-                    _timeZone = XrmService.GetFirst(Entities.timezonedefinition, Fields.timezonedefinition_.timezonecode, UserTimeZoneCode, new[] { Fields.timezonedefinition_.standardname });
-                }
-                return _timeZone;
-            }
-        }
-
-        private LocalisationService _localisationService;
-        private LocalisationService LocalisationService
-        {
-            get
-            {
-                if (_localisationService == null)
-                {
-                    _localisationService = new LocalisationService(new LocalisationSettings(TimeZone.GetStringField(Fields.timezonedefinition_.standardname)));
-                }
-                return _localisationService;
-            }
         }
     }
 }

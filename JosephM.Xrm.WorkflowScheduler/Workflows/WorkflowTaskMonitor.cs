@@ -57,7 +57,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 {
                     email.AppendParagraph(email.CreateHyperlink(email.CreateUrl(Target), "Open " + XrmService.GetEntityLabel(TargetType)));
                 }
-                email.AppendTable(failedJobs, GetFieldsToDisplayInNotificationEmail());
+                email.AppendTable(failedJobs, LocalisationService, GetFieldsToDisplayInNotificationEmail());
 
                 var subject = XrmService.GetEntityLabel(TargetType) + " Target Failures: " + Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_name);
                 SendNotificationEmail(Entities.queue, recipientQueue.Value, subject, email.GetContent());

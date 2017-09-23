@@ -1395,7 +1395,7 @@ namespace JosephM.Xrm.WorkflowScheduler
         }
 
         public IEnumerable<Entity> RetrieveAllOrClauses(string entityName, IEnumerable<ConditionExpression> orConditions,
-            IEnumerable<string> fields)
+            IEnumerable<string> fields, LinkEntity linkEntity = null)
         {
             var filters = orConditions
                 .Select(c =>
@@ -1405,11 +1405,11 @@ namespace JosephM.Xrm.WorkflowScheduler
                     return f;
                 }
                 );
-            return RetrieveAllOrClauses(entityName, filters, fields);
+            return RetrieveAllOrClauses(entityName, filters, fields, linkEntity);
         }
 
         public IEnumerable<Entity> RetrieveAllOrClauses(string entityName, IEnumerable<FilterExpression> orFilters,
-            IEnumerable<string> fields)
+            IEnumerable<string> fields, LinkEntity linkEntity = null)
         {
             var results = new Dictionary<Guid, Entity>();
             var tempFilters = new List<FilterExpression>(orFilters);
@@ -1417,6 +1417,8 @@ namespace JosephM.Xrm.WorkflowScheduler
             {
                 var i = 0;
                 var query = new QueryExpression(entityName);
+                if (linkEntity != null)
+                    query.LinkEntities.Add(linkEntity);
                 query.ColumnSet = CreateColumnSet(fields);
                 query.Criteria.FilterOperator = LogicalOperator.Or;
                 while (tempFilters.Any() && i < 200)
@@ -2792,7 +2794,7 @@ namespace JosephM.Xrm.WorkflowScheduler
             return request;
         }
 
-        public string GetFieldAsDisplayString(string recordType, string fieldName, object value)
+        public string GetFieldAsDisplayString(string recordType, string fieldName, object value, string timeZoneName = null)
         {
             if (value == null)
                 return "";
@@ -2823,9 +2825,18 @@ namespace JosephM.Xrm.WorkflowScheduler
             {
                 if (value is DateTime)
                 {
+                    var dateTime = (DateTime)value;
+                    if(dateTime.Kind == DateTimeKind.Utc)
+                    {
+                        if (!string.IsNullOrWhiteSpace(timeZoneName))
+                            dateTime = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(dateTime, timeZoneName);
+                        else
+                            dateTime = dateTime.ToLocalTime();
+                    }
+
                     if (GetDateFormat(fieldName, recordType) == DateTimeFormat.DateAndTime)
-                        return ((DateTime)value).ToLocalTime().ToString(StringFormats.DateTimeFormat);
-                    return ((DateTime)value).ToLocalTime().Date.ToString(StringFormats.DateFormat);
+                        return dateTime.ToString(StringFormats.DateTimeFormat);
+                    return dateTime.Date.ToString(StringFormats.DateFormat);
                 }
             }
             else if (IsActivityParty(fieldName, recordType))

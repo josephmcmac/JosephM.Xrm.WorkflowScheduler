@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xrm.Sdk;
 using JosephM.Xrm.WorkflowScheduler.Extentions;
+using JosephM.Xrm.WorkflowScheduler.Services;
 
 namespace JosephM.Xrm.WorkflowScheduler.Emails
 {
@@ -42,7 +43,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             }
         }
 
-        public void AppendTable(IEnumerable<Entity> take, IEnumerable<string> fields = null, bool noHyperLinks = false, string appId = null)
+        public void AppendTable(IEnumerable<Entity> take, LocalisationService localisationService, IEnumerable<string> fields = null, bool noHyperLinks = false, string appId = null)
         {
             if (!take.Any())
                 return;
@@ -72,7 +73,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
                 }
 
                 foreach (var field in fields)
-                    AppendTdForField(table, item, field);
+                    AppendTdForField(table, item, field, localisationService);
                 table.AppendLine("</tr>");
             }
             table.AppendLine("</table>");
@@ -97,11 +98,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             table.AppendLine(string.Format("<th {0}>{1}</th>", thStyle, XrmService.GetFieldLabel(path.Last().Value, path.Last().Key)));
         }
 
-        private void AppendTdForField(StringBuilder table, Entity item, string field)
+        private void AppendTdForField(StringBuilder table, Entity item, string field, LocalisationService localisationService)
         {
             var path = XrmService.GetTypeFieldPath(field, item.LogicalName);
             table.AppendLine(string.Format("<td {0}>", tdStyle));
-            table.Append(XrmService.GetFieldAsDisplayString(path.Last().Key, path.Last().Value, item.GetFieldValue(field)));
+            table.Append(XrmService.GetFieldAsDisplayString(path.Last().Key, path.Last().Value, item.GetFieldValue(field), localisationService.TimeZonename));
             table.AppendLine("</td>");
         }
 
