@@ -23,7 +23,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customisations", "Customisations", "{01B5E26A-C17E-47BC-BFB4-B8B793DDE963}"
 	ProjectSection(SolutionItems) = preProject
 		Customisations\Customisations.xlsx = Customisations\Customisations.xlsx
-		..\JosephM.Xrm.WorkflowScheduler/Customisations\TestComponents_2_0_1_0.zip = ..\JosephM.Xrm.WorkflowScheduler/Customisations\TestComponents_2_0_1_0.zip
+		Customisations\TestComponents_2_0_1_0.zip = Customisations\TestComponents_2_0_1_0.zip
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Releases", "Releases", "{9E705EBF-60CB-48E3-AA77-BE5432708896}"
@@ -38,6 +38,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.0.1.0", "2.0.1.0", "{4F37
 	ProjectSection(SolutionItems) = preProject
 		Releases\2.0.1.0\JosephMcGregorWorkflowScheduler_2_0_1_0.zip = Releases\2.0.1.0\JosephMcGregorWorkflowScheduler_2_0_1_0.zip
 		Releases\2.0.1.0\JosephMcGregorWorkflowScheduler_2_0_1_0_managed.zip = Releases\2.0.1.0\JosephMcGregorWorkflowScheduler_2_0_1_0_managed.zip
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.0.2.0", "2.0.2.0", "{D1D1B069-17C5-40A7-B8AC-7CF588DBF4EF}"
+	ProjectSection(SolutionItems) = preProject
+		Releases\2.0.2.0\JosephMcGregorWorkflowScheduler_2_0_2_0.zip = Releases\2.0.2.0\JosephMcGregorWorkflowScheduler_2_0_2_0.zip
 	EndProjectSection
 EndProject
 Global
@@ -65,5 +70,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7F67E28D-95E6-4953-879D-0BF574635494} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{4F3733B1-52E3-46E6-A693-2854F5C630BB} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
+		{D1D1B069-17C5-40A7-B8AC-7CF588DBF4EF} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 	EndGlobalSection
 EndGlobal

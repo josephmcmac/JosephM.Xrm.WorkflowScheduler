@@ -26,9 +26,45 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             VerifyRequiredFields();
             SpawnOrTurnOffRecurrance();
             ValidateNotifications();
+            ValidateQueuesHaveEmailPopulated();
             ResetThresholdsWhenMonitorTurnedOn();
             SpawnMonitorInstance();
             SetViewName();
+        }
+
+        private void ValidateQueuesHaveEmailPopulated()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
+            {
+                var queueFields = QueueFields;
+                foreach (var queueField in queueFields)
+                {
+                    if (FieldChanging(queueField))
+                    {
+                        var queueId = GetLookupGuid(queueField);
+                        if (queueId.HasValue)
+                        {
+                            var mailbox = XrmService.Retrieve(Entities.queue, queueId.Value, new[] { Fields.queue_.emailaddress });
+                            if (string.IsNullOrWhiteSpace(mailbox.GetStringField(Fields.queue_.emailaddress)))
+                                throw new NullReferenceException(string.Format("{0} Does Not Have It's Email Address Populated", GetFieldLabel(queueField)));
+                        }
+                    }
+                }
+
+            }
+        }
+
+        public static IEnumerable<string> QueueFields
+        {
+            get
+            {
+                return new[]
+                {
+                    Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom,
+                    Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto,
+                    Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue
+                };
+            }
         }
 
         private void ValidateCrmUrlField()

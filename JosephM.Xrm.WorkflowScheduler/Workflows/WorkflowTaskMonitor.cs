@@ -38,18 +38,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                     throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TargetType), XrmService.GetEntityLabel(TargetType)));
 
                 var crmUrl = GetCrmURL();
-                //var entityType = GetViewFetchAsQuery().EntityName;
-                //var viewHyperlink = string.Format("<a href={0}>{0}</a>", baseUrl);
-                //var pStyle = "style='font-family: Arial,sans-serif;font-size: 12pt;padding:6.15pt 6.15pt 6.15pt 6.15pt'";
-                //var content =
-                //    string.Format(@"<p {0}>This is an automated notification there are '{1}' to be actioned</p>
-                //                <p {0}>Please review and process the records</p>
-                //                <p {0}>{2}</p>", pStyle, View.GetStringField(Fields.savedquery_.name), viewHyperlink);
-                //exlude primary key and fields in linked entities in list because label
                 var email = new HtmlEmailGenerator(XrmService, crmUrl);
-                email.AppendParagraph(string.Format("This is an automated notification that the {0} named '{1}' fell behind schedule. The system has attempted to restart the continuous workflow but any failed instance should be reviewed"
-                    , XrmService.GetEntityLabel(TargetType)
-                    , Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_name)));
                 email.AppendParagraph(string.Format("This is an automated notification that workflows triggered by the {0} named '{1}' have failed. You will need to review the failures to fix any issues"
                     , XrmService.GetEntityLabel(TargetType)
                     , Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_name)));

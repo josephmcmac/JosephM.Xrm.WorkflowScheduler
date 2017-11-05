@@ -1,4 +1,5 @@
-﻿using JosephM.Xrm.WorkflowScheduler.Workflows;
+﻿using JosephM.Xrm.WorkflowScheduler.Plugins;
+using JosephM.Xrm.WorkflowScheduler.Workflows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -13,6 +14,44 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
     [TestClass]
     public class WorkflowTaskTests : JosephMXrmTest
     {
+        /// <summary>
+        /// Vaslidatesselected queues have email addresses populated
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskValidateQueueEmailsPopulatedTest()
+        {
+            var workflowTask = InitialiseValidWorkflowTask();
+
+            workflowTask.SetLookupField(WorkflowTaskPlugin.QueueFields.First(), TestQueueNoEmailAddress);
+            try
+            {
+                XrmService.Create(workflowTask);
+                Assert.Fail();
+            }
+            catch(Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflowTask.SetLookupField(WorkflowTaskPlugin.QueueFields.First(), TestQueue);
+            workflowTask = XrmService.CreateAndRetreive(workflowTask);
+
+            foreach (var queueField in WorkflowTaskPlugin.QueueFields)
+            {
+                workflowTask.SetLookupField(queueField, TestQueueNoEmailAddress);
+                try
+                {
+                    UpdateFieldsAndRetreive(workflowTask, queueField);
+                    Assert.Fail();
+                }
+                catch (Exception ex)
+                {
+                    Assert.IsFalse(ex is AssertFailedException);
+                }
+                workflowTask.SetLookupField(queueField, TestQueue);
+                workflowTask = UpdateFieldsAndRetreive(workflowTask, queueField);
+            }
+        }
+
         /// <summary>
         /// Vaslidates erros thrown when the jmcg_crmbaseurl field does not have a valid value
         /// </summary>

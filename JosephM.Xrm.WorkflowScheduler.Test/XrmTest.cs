@@ -358,6 +358,27 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             set { _testQueue = value; }
         }
 
+        private Entity _testQueueNoEmailAddress;
+
+        public Entity TestQueueNoEmailAddress
+        {
+            get
+            {
+                if (_testQueueNoEmailAddress == null)
+                {
+                    _testQueueNoEmailAddress = XrmService.GetFirst("queue", "name", "TESTSCRIPTQUEUENOEMAILADDRESS");
+                    if (_testQueueNoEmailAddress == null)
+                    {
+                        _testQueueNoEmailAddress = new Entity("queue");
+                        _testQueueNoEmailAddress.SetField("name", "TESTSCRIPTQUEUENOEMAILADDRESS");
+                        _testQueueNoEmailAddress = CreateAndRetrieve(_testQueueNoEmailAddress);
+                    }
+                }
+                return _testQueueNoEmailAddress;
+            }
+            set { _testQueueNoEmailAddress = value; }
+        }
+
         public void SetRequiredProductFields(Entity product)
         {
             if (product.GetStringField("productnumber").IsNullOrWhiteSpace())
