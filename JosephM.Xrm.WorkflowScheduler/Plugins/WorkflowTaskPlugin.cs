@@ -240,17 +240,20 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PostEvent) &&
                 IsMode(PluginMode.Synchronous))
             {
-                if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_on))
+                if (GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype) != OptionSets.WorkflowTask.WorkflowExecutionType.MonitorOnly)
                 {
-                    if (!GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime).HasValue)
-                        SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow);
-                    var workflows = WorkflowSchedulerService.GetRecurringInstances(TargetId);
-                    if (!workflows.Any())
-                        WorkflowSchedulerService.StartNewContinuousWorkflowFor(TargetId);
-                }
-                if (BooleanChangingToFalse(Fields.jmcg_workflowtask_.jmcg_on))
-                {
-                    WorkflowSchedulerService.StopContinuousWorkflowFor(TargetId);
+                    if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_on))
+                    {
+                        if (!GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime).HasValue)
+                            SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow);
+                        var workflows = WorkflowSchedulerService.GetRecurringInstances(TargetId);
+                        if (!workflows.Any())
+                            WorkflowSchedulerService.StartNewContinuousWorkflowFor(TargetId);
+                    }
+                    if (BooleanChangingToFalse(Fields.jmcg_workflowtask_.jmcg_on))
+                    {
+                        WorkflowSchedulerService.StopContinuousWorkflowFor(TargetId);
+                    }
                 }
             }
         }
@@ -301,13 +304,16 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
                         var targetWorkflowId = GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_targetworkflow);
                         if (!targetWorkflowId.HasValue)
                             throw new InvalidPluginExecutionException(string.Format("{0} is required", GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow)));
-                        var workflow = WorkflowSchedulerService.GetWorkflow(targetWorkflowId.Value);
-                        if (workflow.GetStringField(Fields.workflow_.primaryentity) != requiredTargetedType)
-                            throw new InvalidPluginExecutionException(
-                                string.Format(
-                                    "Error the {0} targets the entity type of {1} but was expected to target the type {2}"
-                                    , GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow),
-                                    workflow.GetStringField(Fields.workflow_.primaryentity), requiredTargetedType));
+                        if (type != OptionSets.WorkflowTask.WorkflowExecutionType.MonitorOnly)
+                        {
+                            var workflow = WorkflowSchedulerService.GetWorkflow(targetWorkflowId.Value);
+                            if (workflow.GetStringField(Fields.workflow_.primaryentity) != requiredTargetedType)
+                                throw new InvalidPluginExecutionException(
+                                    string.Format(
+                                        "Error the {0} targets the entity type of {1} but was expected to target the type {2}"
+                                        , GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetworkflow),
+                                        workflow.GetStringField(Fields.workflow_.primaryentity), requiredTargetedType));
+                        }
                     }
                 }
             }
@@ -317,17 +323,25 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
         {
             if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
             {
-                var amount = GetIntField(Fields.jmcg_workflowtask_.jmcg_periodperrunamount);
-                var unit = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_periodperrununit);
-                if (amount <= 0)
-                    throw new InvalidPluginExecutionException(
-                        string.Format("{0} is required to be greater than or equal to zero",
-                            GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit)));
-                if (unit == OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes && amount < MinimumExecutionMinutes)
-                    throw new InvalidPluginExecutionException(string.Format("{0} is required to be at least {1} {2}",
-                        GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit), MinimumExecutionMinutes,
-                        GetOptionLabel(OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes,
-                            Fields.jmcg_workflowtask_.jmcg_periodperrununit)));
+                if (GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype) != OptionSets.WorkflowTask.WorkflowExecutionType.MonitorOnly)
+                {
+                    var amount = GetIntField(Fields.jmcg_workflowtask_.jmcg_periodperrunamount);
+                    var unit = GetOptionSet(Fields.jmcg_workflowtask_.jmcg_periodperrununit);
+                    if (amount <= 0)
+                        throw new InvalidPluginExecutionException(
+                            string.Format("{0} is required to be greater than zero",
+                                GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrunamount)));
+                    if(unit == -1)
+                    {
+                        throw new NullReferenceException(string.Format("{0} Is Required",
+                                GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit)));
+                    }
+                    if (unit == OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes && amount < MinimumExecutionMinutes)
+                        throw new InvalidPluginExecutionException(string.Format("{0} is required to be at least {1} {2}",
+                            GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit), MinimumExecutionMinutes,
+                            GetOptionLabel(OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes,
+                                Fields.jmcg_workflowtask_.jmcg_periodperrununit)));
+                }
             }
         }
     }

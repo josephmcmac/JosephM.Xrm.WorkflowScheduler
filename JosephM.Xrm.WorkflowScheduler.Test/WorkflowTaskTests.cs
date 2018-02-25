@@ -15,6 +15,54 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
     public class WorkflowTaskTests : JosephMXrmTest
     {
         /// <summary>
+        ///validates creation of a monitor only workflow task
+        ///and that it picks up and sends a notification for
+        ///a failure of the taret workflow
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskMonitorOnlyTest()
+        {
+            var workflowName = "Test Account Target Failure";
+            var taskName = "Test Monitor Only";
+
+            DeleteWorkflowTasks(taskName);
+
+            var workflowWillFail = GetWorkflow(workflowName);
+            //create the workflow task montior only
+            var workflowTask = new Entity(Entities.jmcg_workflowtask);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_name, taskName);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_notesfortargetfailureemail, "These are some fake instructions\nto fix the problem");
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, workflowWillFail);
+            workflowTask.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype,
+                OptionSets.WorkflowTask.WorkflowExecutionType.MonitorOnly);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsfrom, TestQueue);
+            workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TestQueue);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, "jmcg_wstestsettings.jmcg_crminstanceurl");
+            workflowTask = CreateAndRetrieve(workflowTask);
+
+            //wait a second and verify only the montior workflow spawned
+            //i.e this doesn't have a continuous workflow as it doesn't
+            //run a process on a schedule it just monitors
+            Thread.Sleep(5000);
+            Assert.IsFalse(WorkflowSchedulerService.GetRecurringInstances(workflowTask.Id).Any());
+            Assert.IsTrue(WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any());
+            //stop the monitor we will start it again in a second
+            WorkflowSchedulerService.StopMonitorWorkflowFor(workflowTask.Id);
+
+            //run the workflow which will fail
+            var account = CreateAccount();
+            XrmService.StartWorkflow(workflowWillFail.Id, account.Id);
+            //wait a second and spawn the monitor
+            Thread.Sleep(5000);
+            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            //verify the notification email created
+            WaitTillTrue(() => GetRegardingEmails(workflowTask).Any(), 60);
+            
+            DeleteMyToday();
+        }
+
+        /// <summary>
         /// Vaslidatesselected queues have email addresses populated
         /// </summary>
         [TestMethod]

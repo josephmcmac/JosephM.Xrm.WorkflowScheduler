@@ -8,6 +8,7 @@ wsWorkflowTasks.Options.WorkflowExecutionType.TargetThisWorkflowTask = 1;
 wsWorkflowTasks.Options.WorkflowExecutionType.TargetPerFetchResult = 2;
 wsWorkflowTasks.Options.WorkflowExecutionType.TargetPerViewResult = 3;
 wsWorkflowTasks.Options.WorkflowExecutionType.ViewNotification = 4;
+wsWorkflowTasks.Options.WorkflowExecutionType.MonitorOnly = 5;
 wsWorkflowTasks.Options.ViewNotificationOption = new Object();
 wsWorkflowTasks.Options.ViewNotificationOption.EmailQueue = 0;
 wsWorkflowTasks.Options.ViewNotificationOption.EmailOwningUsers = 1;
@@ -58,13 +59,18 @@ wsWorkflowTasks.RefreshVisibility = function () {
     var isTargetWorkflowSelected = wsPageUtility.GetFieldValue("jmcg_targetworkflow") != null;
     var isViewNotificationEntityTypeEntered = wsPageUtility.GetFieldValue("jmcg_viewnotificationentitytype") != null;
     var isViewNotificationToQueue = wsPageUtility.GetFieldValue("jmcg_viewnotificationoption") == wsWorkflowTasks.Options.ViewNotificationOption.EmailQueue;
-
+    var isMonitorOnly = wsPageUtility.GetFieldValue("jmcg_workflowexecutiontype") == wsWorkflowTasks.Options.WorkflowExecutionType.MonitorOnly;
     var displayViewSelectForViewTarget = isViewTarget && isTargetWorkflowSelected;
     var displayViewSelectForViewNotifications = isViewNotification && isViewNotificationEntityTypeEntered;
 
     wsPageUtility.SetFieldVisibility("jmcg_sendnotificationfortargetfailures", typeSelected && !isViewNotification);
     wsPageUtility.SetFieldVisibility("jmcg_targetworkflow", typeSelected && !isViewNotification);
     wsPageUtility.SetFieldVisibility("jmcg_viewnotificationqueue", isViewNotificationToQueue);
+    wsPageUtility.SetFieldVisibility("jmcg_periodperrununit", typeSelected && !isMonitorOnly);
+    wsPageUtility.SetFieldVisibility("jmcg_periodperrunamount", typeSelected && !isMonitorOnly);
+    wsPageUtility.SetFieldVisibility("jmcg_nextexecutiontime", typeSelected && !isMonitorOnly);
+    wsPageUtility.SetFieldVisibility("jmcg_skipweekendsandbusinessclosures", typeSelected && !isMonitorOnly);
+    wsPageUtility.SetFieldVisibility("jmcg_sendnotificationforschedulefailures", typeSelected && !isMonitorOnly);
 
     wsPageUtility.SetSectionVisibility("secViewNotification", isViewNotification);
     wsPageUtility.SetSectionVisibility("secFetchTarget", isFetchTarget);

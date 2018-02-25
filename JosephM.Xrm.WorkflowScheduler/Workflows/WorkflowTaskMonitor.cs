@@ -42,6 +42,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 email.AppendParagraph(string.Format("This is an automated notification that workflows triggered by the {0} named '{1}' have failed. You will need to review the failures to fix any issues"
                     , XrmService.GetEntityLabel(TargetType)
                     , Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_name)));
+                var notes = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_notesfortargetfailureemail);
+                if (!string.IsNullOrWhiteSpace(notes))
+                {
+                    email.AppendParagraph("Notes: " + notes.Replace("\n", "<br />"));
+                }
                 if (!string.IsNullOrWhiteSpace(crmUrl))
                 {
                     email.AppendParagraph(email.CreateHyperlink(email.CreateUrl(Target), "Open " + XrmService.GetEntityLabel(TargetType)));
