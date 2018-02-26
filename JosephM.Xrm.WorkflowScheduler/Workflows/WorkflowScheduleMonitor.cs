@@ -25,18 +25,30 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
         {
             var behindSchedule = IsBehindSchedule();
             ActivityThisType.IsBehindSchedule.Set(ExecutionContext, behindSchedule);
-            if(behindSchedule && !WorkflowSchedulerService.GetRecurringInstances(TargetId).Any())
+            if (behindSchedule)
             {
+                //if there is recurring instance, but we are behind schedule
+                //then probably went into an error waiting state
+                //so lets stop it
+                try
+                {
+                    WorkflowSchedulerService.StopContinuousWorkflowFor(TargetId);
+                }
+                catch (Exception ex)
+                {
+                    Trace(string.Format("Error stopping continuous workflows: {0}", ex.XrmDisplayString()));
+                }
+                //and start a fresh continuous one
                 try
                 {
                     WorkflowSchedulerService.StartNewContinuousWorkflowFor(TargetId);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
-                    Trace(string.Format("Error starting monitor: {0}", ex.XrmDisplayString()));
+                    Trace(string.Format("Error starting continuous workflow: {0}", ex.XrmDisplayString()));
                 }
             }
-            if(behindSchedule && Target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures))
+            if (behindSchedule && Target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_sendnotificationforschedulefailures))
             {
                 var recipientQueue = Target.GetLookupGuid(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto);
                 if (!recipientQueue.HasValue)
