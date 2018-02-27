@@ -3831,6 +3831,7 @@ namespace Schema
 			public const string createdon = "createdon";
 			public const string createdby = "createdby";
 			public const string jmcg_viewnotificationoption = "jmcg_viewnotificationoption";
+			public const string jmcg_emailnotes = "jmcg_emailnotes";
 			public const string jmcg_viewnotificationqueue = "jmcg_viewnotificationqueue";
 			public const string jmcg_targetviewselectionfield = "jmcg_targetviewselectionfield";
 			public const string createdonbehalfby = "createdonbehalfby";
@@ -6624,6 +6625,7 @@ namespace Schema
 			public const string emailaddress = "emailaddress";
 			public const string systemmanaged = "systemmanaged";
 			public const string versionnumber = "versionnumber";
+			public const string jmcg_appid = "jmcg_appid";
 			public const string modifiedby = "modifiedby";
 			public const string createdby = "createdby";
 			public const string teamtype = "teamtype";

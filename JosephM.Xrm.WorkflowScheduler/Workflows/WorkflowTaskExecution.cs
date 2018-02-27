@@ -1,6 +1,5 @@
 ﻿using JosephM.Xrm.WorkflowScheduler.Core;
 using JosephM.Xrm.WorkflowScheduler.Emails;
-using JosephM.Xrm.WorkflowScheduler.Extentions;
 using JosephM.Xrm.WorkflowScheduler.Services;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
@@ -248,14 +247,6 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             {
                 var crmUrl = GetCrmURL();
                 var isToOwner = Target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_viewnotificationoption) == OptionSets.WorkflowTask.ViewNotificationOption.EmailOwningUsers;
-                //var entityType = GetViewFetchAsQuery().EntityName;
-                //var viewHyperlink = string.Format("<a href={0}>{0}</a>", baseUrl);
-                //var pStyle = "style='font-family: Arial,sans-serif;font-size: 12pt;padding:6.15pt 6.15pt 6.15pt 6.15pt'";
-                //var content =
-                //    string.Format(@"<p {0}>This is an automated notification there are '{1}' to be actioned</p>
-                //                <p {0}>Please review and process the records</p>
-                //                <p {0}>{2}</p>", pStyle, View.GetStringField(Fields.savedquery_.name), viewHyperlink);
-                //exlude primary key and fields in linked entities in list because label
                 var fieldsForTable = GetViewLayoutcellFieldNames()
                     .Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) })
                     .ToList();
@@ -271,6 +262,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
                     , isToOwner ? "that you own" : "there are"
                     , View.GetStringField(Fields.savedquery_.name)));
+                var notes = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_emailnotes);
+                if(!string.IsNullOrWhiteSpace(notes))
+                {
+                    email.AppendParagraph(notes.Replace("\n", "<br />"));
+                }
                 email.AppendTable(recordsToList, localisationService, fields: fieldsForTable, aliasTypeMaps: aliasTypeMaps);
                 var viewName = View.GetStringField(Fields.savedquery_.name);
                 var subject = viewName + " Notification";

@@ -45,7 +45,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 var notes = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_notesfortargetfailureemail);
                 if (!string.IsNullOrWhiteSpace(notes))
                 {
-                    email.AppendParagraph("Notes: " + notes.Replace("\n", "<br />"));
+                    email.AppendParagraph(notes.Replace("\n", "<br />"));
                 }
                 if (!string.IsNullOrWhiteSpace(crmUrl))
                 {

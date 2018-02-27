@@ -3,7 +3,6 @@ using Microsoft.Xrm.Sdk.Workflow;
 using Schema;
 using System;
 using System.Activities;
-using System.Linq;
 
 namespace JosephM.Xrm.WorkflowScheduler.Workflows
 {
