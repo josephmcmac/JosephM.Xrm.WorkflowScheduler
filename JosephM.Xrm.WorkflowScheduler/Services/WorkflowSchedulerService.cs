@@ -126,5 +126,30 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
         }
 
         public int MinimumExecutionMinutes { get { return 10; } }
+
+        public string GetUserAppId(Guid userId, string fieldName)
+        {
+            if (string.IsNullOrWhiteSpace(fieldName))
+                return null;
+            var query = XrmService.BuildQuery(Entities.team, new[] { fieldName }, new[] {
+                        new ConditionExpression(fieldName, ConditionOperator.NotNull)
+            }, null);
+            var userMemberLink = query.AddLink(Relationships.team_.teammembership_association.EntityName, Fields.team_.teamid, Fields.team_.teamid);
+            userMemberLink.LinkCriteria.AddCondition(new ConditionExpression(Fields.systemuser_.systemuserid, ConditionOperator.Equal, userId));
+            var results = XrmService.RetrieveAll(query);
+            return results.Count() == 1 ? results.First().GetStringField(fieldName) : null;
+        }
+
+        public string GetQueueAppId(Guid queueId, string fieldName)
+        {
+            if (string.IsNullOrWhiteSpace(fieldName))
+                return null;
+            var query = XrmService.BuildQuery(Entities.team, new[] { fieldName }, new[] {
+                        new ConditionExpression(fieldName, ConditionOperator.NotNull),
+                        new ConditionExpression(Fields.team_.queueid, ConditionOperator.Equal, queueId)
+            }, null);
+            var results = XrmService.RetrieveAll(query);
+            return results.Count() == 1 ? results.First().GetStringField(fieldName) : null;
+        }
     }
 }

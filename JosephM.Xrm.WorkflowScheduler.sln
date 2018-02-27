@@ -23,7 +23,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customisations", "Customisations", "{01B5E26A-C17E-47BC-BFB4-B8B793DDE963}"
 	ProjectSection(SolutionItems) = preProject
 		Customisations\Customisations.xlsx = Customisations\Customisations.xlsx
-		Customisations\TestComponents_2_0_1_0.zip = Customisations\TestComponents_2_0_1_0.zip
+		Customisations\TestComponents_2_1_0_0.zip = Customisations\TestComponents_2_1_0_0.zip
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Releases", "Releases", "{9E705EBF-60CB-48E3-AA77-BE5432708896}"

@@ -166,8 +166,8 @@ wsWorkflowTasks.PopulateViewSelectionList = function () {
 wsWorkflowTasks.InitialiseFields = function () {
     var processResults = function (results) {
         if (results.length > 0) {
-            debugger;
             wsPageUtility.SetFieldValue("jmcg_crmbaseurl", results[0]["jmcg_crmbaseurl"]);
+            wsPageUtility.SetFieldValue("jmcg_fieldforteamappid", results[0]["jmcg_fieldforteamappid"]);
             if (results[0]["jmcg_sendfailurenotificationsfrom"] != null) {
                 var fieldValue = results[0]["jmcg_sendfailurenotificationsfrom"];
                 wsPageUtility.SetLookupField("jmcg_sendfailurenotificationsfrom", fieldValue.type, fieldValue.id, fieldValue.name);
@@ -179,7 +179,7 @@ wsWorkflowTasks.InitialiseFields = function () {
         }
     }
     if (wsPageUtility.GetFormType() == wsPageUtility.FormMode.Create) {
-        wsServiceUtility.RetrieveMultipleAsync("jmcg_workflowtask", "jmcg_crmbaseurl,jmcg_sendfailurenotificationsfrom,jmcg_sendfailurenotificationsto", null, null, processResults);
+        wsServiceUtility.RetrieveMultipleAsync("jmcg_workflowtask", "jmcg_fieldforteamappid,jmcg_crmbaseurl,jmcg_sendfailurenotificationsfrom,jmcg_sendfailurenotificationsto", null, null, processResults);
     }
 }
 

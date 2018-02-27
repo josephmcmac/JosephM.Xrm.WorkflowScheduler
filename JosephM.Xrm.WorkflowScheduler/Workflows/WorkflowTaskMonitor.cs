@@ -38,7 +38,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                     throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TargetType), XrmService.GetEntityLabel(TargetType)));
 
                 var crmUrl = GetCrmURL();
-                var email = new HtmlEmailGenerator(XrmService, crmUrl);
+                var email = new HtmlEmailGenerator(XrmService, crmUrl, null);
                 email.AppendParagraph(string.Format("This is an automated notification that workflows triggered by the {0} named '{1}' have failed. You will need to review the failures to fix any issues"
                     , XrmService.GetEntityLabel(TargetType)
                     , Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_name)));

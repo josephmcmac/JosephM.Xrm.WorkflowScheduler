@@ -263,7 +263,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 {
                     fieldsForTable.Remove("ownerid");
                 }
-                var email = new HtmlEmailGenerator(XrmService, crmUrl);
+
+                var appId = recipientType == Entities.systemuser
+                    ? WorkflowSchedulerService.GetUserAppId(recipientId, Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid))
+                    : WorkflowSchedulerService.GetQueueAppId(recipientId, Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid));
+                var email = new HtmlEmailGenerator(XrmService, crmUrl, appId);
                 email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
                     , isToOwner ? "that you own" : "there are"
                     , View.GetStringField(Fields.savedquery_.name)));

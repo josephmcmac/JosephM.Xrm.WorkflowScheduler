@@ -11,6 +11,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
     public class HtmlEmailGenerator
     {
         public XrmService XrmService { get; set; }
+        public string AppendAppIdToUrls { get; }
         public string WebUrl { get; set; }
         private bool IncludeHyperlinks
         {
@@ -22,9 +23,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
         private const string tdStyle = "style='font-family: Segoe UI;font-size: 13px;color: #444444;vertical-align: top;text-align: left; margin: 5px; border-style: solid; border-width: 1px; padding: 5px;'";
         private const string aStyle = "style='font-family: Segoe UI;font-size: 13px;'";
 
-        public HtmlEmailGenerator(XrmService xrmService, string webUrl)
+        public HtmlEmailGenerator(XrmService xrmService, string webUrl, string appendAppIdToUrls)
         {
             XrmService = xrmService;
+            AppendAppIdToUrls = appendAppIdToUrls;
             WebUrl = webUrl != null && webUrl.EndsWith("/")
                 ? webUrl.Substring(0, webUrl.Length - 1)
                 : webUrl;
@@ -68,7 +70,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
                 if (IncludeHyperlinks && !noHyperLinks)
                 {
                     table.AppendLine(string.Format("<td {0}>", tdStyle));
-                    var url = CreateUrl(item, appId);
+                    var url = CreateUrl(item);
                     AppendUrl(url, "View", table);
                     table.AppendLine("</td>");
                 }
@@ -86,10 +88,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
             }
         }
 
-        public string CreateUrl(Entity item, string appId = null)
+        public string CreateUrl(Entity item)
         {
             return string.Format("{0}/main.aspx?{1}pagetype=entityrecord&etn={2}&id={3}", WebUrl,
-                appId == null ? null : ("appid=" + appId + "&"),
+                AppendAppIdToUrls == null ? null : ("appid=" + AppendAppIdToUrls + "&"),
                 item.LogicalName, item.Id);
         }
 
