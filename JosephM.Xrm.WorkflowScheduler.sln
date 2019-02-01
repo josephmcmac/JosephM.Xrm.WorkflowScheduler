@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler", "JosephM.Xrm.WorkflowScheduler\JosephM.Xrm.WorkflowScheduler.csproj", "{C1680534-FA12-4C76-A7A4-4F1843D7DCC2}"
 EndProject
@@ -12,12 +12,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Read Me", "Read Me", "{E906366B-74E6-494C-B31E-A4B175C9387B}"
 	ProjectSection(SolutionItems) = preProject
 		Read Me\Solution Details.docx = Read Me\Solution Details.docx
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{F4152FBB-1BAF-4E9D-BBB5-DCE08536C8D4}"
-	ProjectSection(SolutionItems) = preProject
-		SolutionItems\solution.xrmconnection = SolutionItems\solution.xrmconnection
-		SolutionItems\xrmpackage.xrmsettings = SolutionItems\xrmpackage.xrmsettings
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customisations", "Customisations", "{01B5E26A-C17E-47BC-BFB4-B8B793DDE963}"
@@ -49,6 +43,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.1.0.0", "2.1.0.0", "{6FD8
 	ProjectSection(SolutionItems) = preProject
 		Releases\2.1.0.0\JosephMcGregorWorkflowScheduler_2_1_0_0.zip = Releases\2.1.0.0\JosephMcGregorWorkflowScheduler_2_1_0_0.zip
 		Releases\2.1.0.0\JosephMcGregorWorkflowScheduler_2_1_0_0_managed.zip = Releases\2.1.0.0\JosephMcGregorWorkflowScheduler_2_1_0_0_managed.zip
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Xrm.Vsix", "Xrm.Vsix", "{1C81FF2D-5ECE-4636-AA00-85C573173C28}"
+	ProjectSection(SolutionItems) = preProject
+		Xrm.Vsix\joseph.mcgregor-macd.solution.xrmconnection = Xrm.Vsix\joseph.mcgregor-macd.solution.xrmconnection
+		Xrm.Vsix\joseph.mcgregor-macd.xrmpackage.xrmsettings = Xrm.Vsix\joseph.mcgregor-macd.xrmpackage.xrmsettings
 	EndProjectSection
 EndProject
 Global

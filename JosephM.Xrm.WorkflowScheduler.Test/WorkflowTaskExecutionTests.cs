@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using JosephM.Core.Extentions;
+﻿using JosephM.Xrm.WorkflowScheduler.Workflows;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.Xrm.Sdk;
-using Microsoft.Xrm.Sdk.Query;
 using Schema;
-using JosephM.Xrm.WorkflowScheduler.Workflows;
-using System.Threading;
+using System;
+using System.Collections.Generic;
 
 namespace JosephM.Xrm.WorkflowScheduler.Test
 {

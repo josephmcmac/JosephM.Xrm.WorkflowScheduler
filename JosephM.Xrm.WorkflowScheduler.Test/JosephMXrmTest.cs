@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using JosephM.Xrm.WorkflowScheduler.Services;
-using Microsoft.Xrm.Sdk;
-using Schema;
-using JosephM.Core.Extentions;
-using System;
-using Microsoft.Xrm.Sdk.Query;
+﻿using JosephM.Xrm.WorkflowScheduler.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using Schema;
+using System;
+using System.Collections.Generic;
 
 namespace JosephM.Xrm.WorkflowScheduler.Test
 {
@@ -67,7 +66,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime, DateTime.UtcNow.AddMinutes(-10));
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
             entity.SetField(Fields.jmcg_workflowtask_.jmcg_crmbaseurl, "jmcg_wstestsettings.jmcg_crminstanceurl");
-            if (!fetchXml.IsNullOrWhiteSpace())
+            if (!string.IsNullOrWhiteSpace(fetchXml))
             {
                 entity.SetField(Fields.jmcg_workflowtask_.jmcg_fetchquery, fetchXml);
                 entity.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype,
