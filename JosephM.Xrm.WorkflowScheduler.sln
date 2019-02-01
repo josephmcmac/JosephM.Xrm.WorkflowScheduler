@@ -9,11 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowSchedul
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler.WebResources", "JosephM.Xrm.WorkflowScheduler.WebResources\JosephM.Xrm.WorkflowScheduler.WebResources.csproj", "{FF7409D8-1099-4DBF-BA54-F54D6BFD87C3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Read Me", "Read Me", "{E906366B-74E6-494C-B31E-A4B175C9387B}"
-	ProjectSection(SolutionItems) = preProject
-		Read Me\Solution Details.docx = Read Me\Solution Details.docx
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customisations", "Customisations", "{01B5E26A-C17E-47BC-BFB4-B8B793DDE963}"
 	ProjectSection(SolutionItems) = preProject
 		Customisations\Customisations.xlsx = Customisations\Customisations.xlsx
