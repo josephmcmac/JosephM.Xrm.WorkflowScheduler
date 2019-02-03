@@ -585,6 +585,16 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             var account4 = CreateAccount();
             XrmService.Assign(account4, GetTestTeam().Id, Entities.team);
 
+            //field set when notification sent
+            Assert.IsNull(account1.GetField(Fields.account_.lastusedincampaign));
+            Assert.IsNull(account2.GetField(Fields.account_.lastusedincampaign));
+            Assert.IsNull(account3.GetField(Fields.account_.lastusedincampaign));
+            Assert.IsNull(account4.GetField(Fields.account_.lastusedincampaign));
+            Assert.IsFalse(account1.GetBoolean(Fields.account_.donotfax));
+            Assert.IsFalse(account2.GetBoolean(Fields.account_.donotfax));
+            Assert.IsFalse(account3.GetBoolean(Fields.account_.donotfax));
+            Assert.IsFalse(account4.GetBoolean(Fields.account_.donotfax));
+
             var testViewName = "Active Accounts";
             var testView = XrmService.GetFirst(Entities.savedquery, Fields.savedquery_.name, testViewName);
             var workflowActivity = InitialiseValidWorkflowTask();
@@ -639,15 +649,28 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
                 Assert.IsFalse(ex is AssertFailedException);
             }
             workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_targetviewid, testView.Id.ToString());
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent, Fields.account_.lastusedincampaign);
             workflowActivity = CreateAndRetrieve(workflowActivity);
             Assert.AreEqual(testViewName, workflowActivity.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname));
-            var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
-            instance.DoIt(true);
+            //var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
+            //instance.DoIt(true);
 
             WaitTillTrue(() => GetRegardingEmails(workflowActivity).Count() == 2, 60);
             var emails = GetRegardingEmails(workflowActivity);
             Assert.AreEqual(1, emails.Count(e => e.GetActivityPartyReferences(Fields.email_.to).First().Id == CurrentUserId));
             Assert.AreEqual(1, emails.Count(e => e.GetActivityPartyReferences(Fields.email_.to).First().Id == OtherUserId));
+
+            //check field set when notification sent
+            WaitTillTrue(() => Refresh(account3).GetField(Fields.account_.lastusedincampaign) != null, 60);
+            account1 = Refresh(account1);
+            account2 = Refresh(account2);
+            account3 = Refresh(account3);
+            account4 = Refresh(account4);
+            Assert.IsNotNull(account1.GetField(Fields.account_.lastusedincampaign));
+            Assert.IsNotNull(account2.GetField(Fields.account_.lastusedincampaign));
+            Assert.IsNotNull(account3.GetField(Fields.account_.lastusedincampaign));
+            //this one wasnt sent since linked to team with no email
+            Assert.IsNull(account4.GetField(Fields.account_.lastusedincampaign));
 
             workflowActivity = InitialiseValidWorkflowTask();
             workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_targetworkflow, null);
@@ -668,6 +691,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
                 Assert.IsFalse(ex is AssertFailedException);
             }
             workflowActivity.SetLookupField(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TestQueue);
+            workflowActivity.SetField(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent, Fields.account_.donotfax);
             workflowActivity = CreateAndRetrieve(workflowActivity);
             Assert.AreEqual(testViewName, workflowActivity.GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewselectedname));
             //var instance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflowActivity);
@@ -676,6 +700,17 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             WaitTillTrue(() => GetRegardingEmails(workflowActivity).Count() == 1, 60);
             var secondEmail = GetRegardingEmails(workflowActivity).First();
             Assert.AreEqual(TestQueue.Id, secondEmail.GetActivityPartyReferences(Fields.email_.to).First().Id);
+
+            //check field set when notification sent
+            WaitTillTrue(() => Refresh(account4).GetBoolean(Fields.account_.donotfax), 60);
+            account1 = Refresh(account1);
+            account2 = Refresh(account2);
+            account3 = Refresh(account3);
+            account4 = Refresh(account4);
+            Assert.IsTrue(account1.GetBoolean(Fields.account_.donotfax));
+            Assert.IsTrue(account2.GetBoolean(Fields.account_.donotfax));
+            Assert.IsTrue(account3.GetBoolean(Fields.account_.donotfax));
+            Assert.IsTrue(account4.GetBoolean(Fields.account_.donotfax));
         }
 
         private Entity GetTESTACCOUNTVIEWAccount()

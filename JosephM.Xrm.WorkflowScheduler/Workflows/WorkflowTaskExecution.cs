@@ -2,6 +2,7 @@
 using JosephM.Xrm.WorkflowScheduler.Emails;
 using JosephM.Xrm.WorkflowScheduler.Services;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using Microsoft.Xrm.Sdk.Workflow;
 using Schema;
@@ -93,7 +94,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                     }
                 case OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification:
                     {
-                        SendViewNotifications(Target);
+                        SendViewNotifications(Target, startedAt, isSandboxIsolated);
                         break;
                     }
             }
@@ -143,7 +144,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             }
         }
 
-        private void SendViewNotifications(Entity target)
+        private void SendViewNotifications(Entity target, DateTime startedAt, bool isSandboxIsolated)
         {
             var query = GetViewFetchAsQuery();
             var aliasTypeMaps = new Dictionary<string, string>();
@@ -198,6 +199,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                                 .Where(r => r.GetLookupGuid("ownerid") == userId)
                                 .ToArray();
                             SendViewNotificationEmailWithTable(Entities.systemuser, userId, thisDudesRecords, localisationService, aliasTypeMaps);
+                            SetNotificationSentField(thisDudesRecords, target, startedAt, isSandboxIsolated);
                         }
                         break;
                     }
@@ -208,8 +210,30 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         if(!recipientQueue.HasValue)
                             throw new NullReferenceException(string.Format("Error required field {0} is empty on the target {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_viewnotificationqueue, TargetType), XrmService.GetEntityLabel(TargetType)));
                         SendViewNotificationEmailWithTable(Entities.queue, recipientQueue.Value, recordsForReminder, LocalisationService, aliasTypeMaps);
+                        SetNotificationSentField(recordsForReminder, target, startedAt, isSandboxIsolated);
                         break;
                     }
+            }
+        }
+
+        private void SetNotificationSentField(IEnumerable<Entity> records, Entity target, DateTime startedAt, bool isSandboxIsolated)
+        {
+            var fieldToSet = target.GetStringField(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent);
+            if (!string.IsNullOrWhiteSpace(fieldToSet))
+            {
+                foreach (var record in records.Take(HtmlEmailGenerator.MaximumNumberOfEntitiesToList))
+                {
+                    var fieldType = XrmService.GetFieldType(target.GetStringField(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent), record.LogicalName);
+                    if (fieldType == AttributeTypeCode.Boolean)
+                        XrmService.SetField(record.LogicalName, record.Id, fieldToSet, true);
+                    else if (fieldType == AttributeTypeCode.DateTime)
+                        XrmService.SetField(record.LogicalName, record.Id, fieldToSet, startedAt);
+                    else
+                        throw new NotImplementedException($"{XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent, Entities.jmcg_workflowtask)} On This {XrmService.GetEntityLabel(Entities.jmcg_workflowtask)} Is Set To {fieldToSet} Which Is Of Type {fieldType}. Setting Fields Of This Type Is Not Implemented");
+                    //lets escape if we are close to the sandbox time limit
+                    if (isSandboxIsolated && ((DateTime.UtcNow - startedAt) > new TimeSpan(0, 0, MaxSandboxIsolationExecutionSeconds - 10)))
+                        return;
+                }
             }
         }
 

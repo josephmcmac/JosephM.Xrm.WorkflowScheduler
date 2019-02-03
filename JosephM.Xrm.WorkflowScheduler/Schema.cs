@@ -3857,6 +3857,7 @@ namespace Schema
 			public const string importsequencenumber = "importsequencenumber";
 			public const string jmcg_targetworkflow = "jmcg_targetworkflow";
 			public const string jmcg_sendnotificationfortargetfailures = "jmcg_sendnotificationfortargetfailures";
+			public const string statuscode = "statuscode";
 			public const string jmcg_minimumtargetfailuredatetime = "jmcg_minimumtargetfailuredatetime";
 			public const string jmcg_workflowexecutiontype = "jmcg_workflowexecutiontype";
 			public const string jmcg_notesfortargetfailureemail = "jmcg_notesfortargetfailureemail";
@@ -3868,7 +3869,7 @@ namespace Schema
 			public const string jmcg_minimumschedulefailuredatetime = "jmcg_minimumschedulefailuredatetime";
 			public const string owningbusinessunit = "owningbusinessunit";
 			public const string jmcg_targetviewselectedname = "jmcg_targetviewselectedname";
-			public const string statuscode = "statuscode";
+			public const string jmcg_setfieldwhennotificationsent = "jmcg_setfieldwhennotificationsent";
 			public const string jmcg_skipweekendsandbusinessclosures = "jmcg_skipweekendsandbusinessclosures";
 			public const string jmcg_name = "jmcg_name";
 			public const string jmcg_nextexecutiontime = "jmcg_nextexecutiontime";
@@ -11638,6 +11639,11 @@ namespace Schema
 				public const int Days = 3;
 				public const int Months = 4;
 			}
+			public static class StatusReason
+			{
+				public const int Active = 1;
+				public const int Inactive = 2;
+			}
 			public static class WorkflowExecutionType
 			{
 				public const int TargetThisWorkflowTask = 1;
@@ -11645,11 +11651,6 @@ namespace Schema
 				public const int TargetPerViewResult = 3;
 				public const int ViewNotification = 4;
 				public const int MonitorOnly = 5;
-			}
-			public static class StatusReason
-			{
-				public const int Active = 1;
-				public const int Inactive = 2;
 			}
 		}
 		public static class ContractLine
