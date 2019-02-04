@@ -49,6 +49,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.1.2.0", "2.1.2.0", "{9C21CD52-6242-4AF9-8770-789436963A2C}"
 	ProjectSection(SolutionItems) = preProject
 		Releases\2.1.2.0\JosephMcGregorWorkflowScheduler_2_1_2_0.zip = Releases\2.1.2.0\JosephMcGregorWorkflowScheduler_2_1_2_0.zip
+		Releases\2.1.2.0\JosephMcGregorWorkflowScheduler_2_1_2_0_managed.zip = Releases\2.1.2.0\JosephMcGregorWorkflowScheduler_2_1_2_0_managed.zip
 	EndProjectSection
 EndProject
 Global
