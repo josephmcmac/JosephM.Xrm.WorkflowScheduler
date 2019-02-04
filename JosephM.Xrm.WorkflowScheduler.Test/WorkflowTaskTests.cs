@@ -482,6 +482,69 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             workflow = UpdateFieldsAndRetreive(workflow);
         }
 
+        /// <summary>
+        /// Verifies error thrown when below minimum period threshold
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskVerifyActivePeriod()
+        {
+            var workflow = InitialiseValidWorkflowTask();
+            workflow.SetField(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours, true);
+            try
+            {
+                workflow = CreateAndRetrieve(workflow);
+                Assert.Fail();
+            }
+            catch(Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflow.SetField(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours, false);
+            workflow = CreateAndRetrieve(workflow);
+
+            workflow.SetField(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours, true);
+            try
+            {
+                workflow = UpdateFieldsAndRetreive(workflow, Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours);
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_starthour, 5);
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_startminute, 5);
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_startampm, OptionSets.WorkflowTask.StartAMPM.PM);
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_endhour, 4);
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_endminute, 4);
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_endampm, OptionSets.WorkflowTask.EndAMPM.PM);
+            try
+            {
+                workflow = UpdateFieldsAndRetreive(workflow, Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours
+                    , Fields.jmcg_workflowtask_.jmcg_starthour
+                    , Fields.jmcg_workflowtask_.jmcg_startminute
+                    , Fields.jmcg_workflowtask_.jmcg_startampm
+                    , Fields.jmcg_workflowtask_.jmcg_endhour
+                    , Fields.jmcg_workflowtask_.jmcg_endminute
+                    , Fields.jmcg_workflowtask_.jmcg_endampm
+                    );
+                Assert.Fail();
+            }
+            catch (Exception ex)
+            {
+                Assert.IsFalse(ex is AssertFailedException);
+            }
+            workflow.SetOptionSetField(Fields.jmcg_workflowtask_.jmcg_startampm, OptionSets.WorkflowTask.StartAMPM.AM);
+            workflow = UpdateFieldsAndRetreive(workflow, Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours
+                    , Fields.jmcg_workflowtask_.jmcg_starthour
+                    , Fields.jmcg_workflowtask_.jmcg_startminute
+                    , Fields.jmcg_workflowtask_.jmcg_startampm
+                    , Fields.jmcg_workflowtask_.jmcg_endhour
+                    , Fields.jmcg_workflowtask_.jmcg_endminute
+                    , Fields.jmcg_workflowtask_.jmcg_endampm
+                    );
+        }
+
         private void VerifyCreateOrUpdateError(Entity workflow)
         {
             try

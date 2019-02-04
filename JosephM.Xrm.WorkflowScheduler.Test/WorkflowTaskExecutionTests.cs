@@ -32,8 +32,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             //verify skipped if skip and not if not
             var workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>();
             workflowInstance.CurrentUserId = CurrentUserId;
-            Assert.AreEqual(executionTime.AddDays(2), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true));
-            Assert.AreEqual(executionTime.AddDays(1), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, false));
+            Assert.AreEqual(executionTime.AddDays(2), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null));
+            Assert.AreEqual(executionTime.AddDays(1), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, false, false, null, null));
 
             //now lets verify that Saturday and Sunday are skipped
 
@@ -41,17 +41,26 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             while (executionTime.DayOfWeek != DayOfWeek.Friday)
                 executionTime = executionTime.AddDays(1);
             //verify skipped if skip and not if not
-            Assert.AreEqual(executionTime.AddDays(3), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true));
-            Assert.AreEqual(executionTime.AddDays(1), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, false));
+            Assert.AreEqual(executionTime.AddDays(3), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null));
+            Assert.AreEqual(executionTime.AddDays(1), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, false, false, null, null));
 
-            //no lets verify monday skipped as well if a holiday
+            //now lets verify monday skipped as well if a holiday
             //create the monday holiday
             calendar = CreateBusinessClosure(calendar, executionTime.AddDays(3));
             workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>();
             workflowInstance.CurrentUserId = CurrentUserId;
             //verify skipped if skip and not if not
-            Assert.AreEqual(executionTime.AddDays(4), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true));
-            Assert.AreEqual(executionTime.AddDays(1), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, false));
+            Assert.AreEqual(executionTime.AddDays(4), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null));
+            Assert.AreEqual(executionTime.AddDays(1), workflowInstance.CalculateNextExecutionTime(executionTime, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, false, false, null, null));
+
+            //okay lets check the limited business hours
+            calendar = DeleteAllBusinessClosures();
+            var timeOfDay = DateTime.Now.TimeOfDay;
+            var tenMinutesAgo = timeOfDay.Add(new TimeSpan(0, 0, -10, 0, 0));
+            var oneHourTenMinutesAgo = timeOfDay.Add(new TimeSpan(0, -1, -10, 0, 0));
+            var expected = DateTime.Today.AddDays(1).Add(oneHourTenMinutesAgo).ToUniversalTime();
+            Assert.AreEqual(expected, workflowInstance.CalculateNextExecutionTime(DateTime.UtcNow, OptionSets.WorkflowTask.PeriodPerRunUnit.Hours, 1, false, true, oneHourTenMinutesAgo, tenMinutesAgo));
+
         }
 
         private Entity CreateBusinessClosure(Entity calendar, DateTime holidayDate)

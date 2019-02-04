@@ -151,5 +151,45 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
             var results = XrmService.RetrieveAll(query);
             return results.Count() == 1 ? results.First().GetStringField(fieldName) : null;
         }
+
+        public TimeSpan? GetStartTimeSpan(Func<string, object> getField)
+        {
+            TimeSpan? timeSpan = null;
+            if (XrmEntity.GetBoolean(getField(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours)))
+            {
+                var hour = XrmEntity.GetOptionSetValue(getField(Fields.jmcg_workflowtask_.jmcg_starthour));
+                var minute = XrmEntity.GetOptionSetValue(getField(Fields.jmcg_workflowtask_.jmcg_startminute));
+                var ampm = XrmEntity.GetOptionSetValue(getField(Fields.jmcg_workflowtask_.jmcg_startampm));
+                if (hour != -1 && minute != -1 && ampm != -1)
+                {
+                    if (hour == 12)
+                        hour = 0;
+                    if (ampm == OptionSets.WorkflowTask.StartAMPM.PM)
+                        hour = hour + 12;
+                    timeSpan = new TimeSpan(hour, minute, 0);
+                }
+            }
+            return timeSpan;
+        }
+
+        public TimeSpan? GetEndTimeSpan(Func<string, object> getField)
+        {
+            TimeSpan? timeSpan = null;
+            if (XrmEntity.GetBoolean(getField(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours)))
+            {
+                var hour = XrmEntity.GetOptionSetValue(getField(Fields.jmcg_workflowtask_.jmcg_endhour));
+                var minute = XrmEntity.GetOptionSetValue(getField(Fields.jmcg_workflowtask_.jmcg_endminute));
+                var ampm = XrmEntity.GetOptionSetValue(getField(Fields.jmcg_workflowtask_.jmcg_endampm));
+                if (hour != -1 && minute != -1 && ampm != -1)
+                {
+                    if (hour == 12)
+                        hour = 0;
+                    if (ampm == OptionSets.WorkflowTask.StartAMPM.PM)
+                        hour = hour + 12;
+                    timeSpan = new TimeSpan(hour, minute, 0);
+                }
+            }
+            return timeSpan;
+        }
     }
 }

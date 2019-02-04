@@ -30,6 +30,46 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             ResetThresholdsWhenMonitorTurnedOn();
             SpawnMonitorInstance();
             SetViewName();
+            VerifyActiveHours();
+        }
+
+        private void VerifyActiveHours()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
+            {
+                var fieldsRequiredForLimitHours = new[]
+{
+                        Fields.jmcg_workflowtask_.jmcg_starthour,
+                        Fields.jmcg_workflowtask_.jmcg_startminute,
+                        Fields.jmcg_workflowtask_.jmcg_startampm,
+                        Fields.jmcg_workflowtask_.jmcg_endhour,
+                        Fields.jmcg_workflowtask_.jmcg_endminute,
+                        Fields.jmcg_workflowtask_.jmcg_endampm,
+                    };
+                if (FieldChanging(fieldsRequiredForLimitHours
+                    .Union(new[] { Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours })))
+                {
+                    if (GetBoolean(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours))
+                    {
+
+                        foreach (var field in fieldsRequiredForLimitHours)
+                        {
+                            if (GetField(field) == null)
+                            {
+                                throw new NullReferenceException($"{GetFieldLabel(field)} Is Required When {GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours)} Is Set");
+                            }
+                        }
+                        var startTime = WorkflowSchedulerService.GetStartTimeSpan(GetField);
+                        var endTime = WorkflowSchedulerService.GetEndTimeSpan(GetField);
+                        if (startTime == null)
+                            throw new NullReferenceException($"Error Validating Active Hours Start Time Is Null");
+                        if (endTime == null)
+                            throw new NullReferenceException($"Error Validating Active Hours End Time Is Null");
+                        if (startTime >= endTime)
+                            throw new InvalidPluginExecutionException("The Start Time Configured For The Active Hours Must Be Less Than End Time");
+                    }
+                }
+            }
         }
 
         private void ValidateQueuesHaveEmailPopulated()

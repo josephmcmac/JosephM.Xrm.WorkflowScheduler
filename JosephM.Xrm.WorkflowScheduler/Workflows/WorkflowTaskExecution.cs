@@ -101,7 +101,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             var periodUnit = Target.GetOptionSetValue(Fields.jmcg_workflowtask_.jmcg_periodperrununit);
             var periodAmount = Target.GetInt(Fields.jmcg_workflowtask_.jmcg_periodperrunamount);
             var skipWeekendsAndClosures = Target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_skipweekendsandbusinessclosures);
-            var nextExecutionTime = CalculateNextExecutionTime(thisExecutionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
+            var nextExecutionTime = CalculateNextExecutionTime(thisExecutionTime, periodUnit, periodAmount, skipWeekendsAndClosures, Target.GetBoolean(Fields.jmcg_workflowtask_.jmcg_onlyrunbetweenhours), WorkflowSchedulerService.GetStartTimeSpan(Target.GetField), WorkflowSchedulerService.GetEndTimeSpan(Target.GetField));
             return nextExecutionTime;
         }
 
@@ -325,7 +325,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             return attributeNames;
         }
 
-        public DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, bool skipWeekendsAndClosures)
+        public DateTime CalculateNextExecutionTime(DateTime thisExecutionTime, int periodUnit, int periodAmount, bool skipWeekendsAndClosures, bool limitHours, TimeSpan? startTime, TimeSpan? endTime)
         {
             var executionTime = thisExecutionTime;
             switch (periodUnit)
@@ -356,7 +356,17 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                     }
             }
             if (executionTime <= DateTime.UtcNow)
-                executionTime = CalculateNextExecutionTime(DateTime.UtcNow, periodUnit, periodAmount, skipWeekendsAndClosures);
+                executionTime = CalculateNextExecutionTime(DateTime.UtcNow, periodUnit, periodAmount, skipWeekendsAndClosures, limitHours, startTime, endTime);
+
+            if(limitHours)
+            {
+                var tempActiveTimeLocal = ConvertToUserLocal(executionTime);
+                while(tempActiveTimeLocal.TimeOfDay < startTime || tempActiveTimeLocal.TimeOfDay > endTime)
+                {
+                    executionTime = executionTime.AddMinutes(1);
+                    tempActiveTimeLocal = ConvertToUserLocal(executionTime);
+                }
+            }
 
             if (!skipWeekendsAndClosures)
                 return executionTime;
@@ -368,10 +378,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             //if weekend
             if (executionTimeUserLocal.DayOfWeek == DayOfWeek.Saturday
                 || executionTimeUserLocal.DayOfWeek == DayOfWeek.Sunday)
-                return CalculateNextExecutionTime(executionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
+                return CalculateNextExecutionTime(executionTime, periodUnit, periodAmount, skipWeekendsAndClosures, limitHours, startTime, endTime);
             //if business closure
             if(IsBusinessClosure(executionTime))
-                return CalculateNextExecutionTime(executionTime, periodUnit, periodAmount, skipWeekendsAndClosures);
+                return CalculateNextExecutionTime(executionTime, periodUnit, periodAmount, skipWeekendsAndClosures, limitHours, startTime, endTime);
 
             return executionTime;
         }
