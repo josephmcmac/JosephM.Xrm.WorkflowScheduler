@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using JosephM.Xrm.WorkflowScheduler.Core;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using Schema;
 
@@ -31,6 +32,48 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             SpawnMonitorInstance();
             SetViewName();
             VerifyActiveHours();
+            VerifySetFieldWhenNotificationSent();
+        }
+
+        private void VerifySetFieldWhenNotificationSent()
+        {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent))
+            {
+                if(FieldChanging(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent
+                    , Fields.jmcg_workflowtask_.jmcg_targetviewid
+                    , Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype))
+                {
+                    if (GetOptionSet(Fields.jmcg_workflowtask_.jmcg_workflowexecutiontype) == OptionSets.WorkflowTask.WorkflowExecutionType.ViewNotification)
+                    {
+                        var fieldToSet = GetStringField(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent);
+                        if (!string.IsNullOrWhiteSpace(fieldToSet))
+                        {
+                            var savedQueryId = GetStringField(Fields.jmcg_workflowtask_.jmcg_targetviewid);
+                            if (string.IsNullOrWhiteSpace(savedQueryId))
+                                throw new NullReferenceException($"{GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_targetviewid)} Is Required");
+                            var savedQuery = XrmService.Retrieve(Entities.savedquery, new Guid(savedQueryId));
+                            var fetch = savedQuery.GetStringField(Fields.savedquery_.fetchxml);
+                            if (string.IsNullOrWhiteSpace(fetch))
+                                throw new NullReferenceException($"Fetch Is Empty On The Saved View");
+                            var query = XrmService.ConvertFetchToQueryExpression(fetch);
+                            var targetType = query.EntityName;
+                            if (!XrmService.FieldExists(fieldToSet, targetType))
+                                throw new Exception($"The Field Populated In {GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent)} Does Not Exist In The Type {targetType}");
+
+                            var validFieldTypes = new[]
+                            {
+                                AttributeTypeCode.Boolean,
+                                AttributeTypeCode.DateTime
+                            };
+                            var fieldType = XrmService.GetFieldType(fieldToSet, targetType);
+                            if(!validFieldTypes.Contains(fieldType))
+                            {
+                                throw new Exception($"The Field Populated In {GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent)} Is Required To Be Of Type {validFieldTypes.Select(t => t.ToString()).JoinGrammarOr()}. Actual Type Is {fieldType}");
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void VerifyActiveHours()
