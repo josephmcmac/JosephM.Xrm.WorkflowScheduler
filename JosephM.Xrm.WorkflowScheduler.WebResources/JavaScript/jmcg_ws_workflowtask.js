@@ -20,6 +20,7 @@ wsWorkflowTasks.RunOnLoad = function () {
     wsWorkflowTasks.InitialiseFields();
     wsWorkflowTasks.LoadTypes();
     wsWorkflowTasks.ActiveHours();
+    wsWorkflowTasks.LoadSetFieldWhenNotificationSentPicklist();
 };
 
 wsWorkflowTasks.RunOnChange = function (fieldName) {
@@ -38,6 +39,7 @@ wsWorkflowTasks.RunOnChange = function (fieldName) {
             break;
         case "jmcg_viewnotificationentitytype":
             wsWorkflowTasks.PopulateViewSelectionList();
+            wsWorkflowTasks.LoadSetFieldWhenNotificationSentPicklist();
             wsWorkflowTasks.RefreshVisibility();
             break;
         case "jmcg_viewnotificationoption":
@@ -48,6 +50,9 @@ wsWorkflowTasks.RunOnChange = function (fieldName) {
             break;
         case "jmcg_onlyrunbetweenhours":
             wsWorkflowTasks.ActiveHours();
+            break;
+        case "jmcg_setfieldwhennotificationsentselection":
+            wsWorkflowTasks.SetSetFieldSelection();
             break;
     }
 };
@@ -80,6 +85,8 @@ wsWorkflowTasks.RefreshVisibility = function () {
     wsPageUtility.SetFieldVisibility("jmcg_nextexecutiontime", typeSelected && !isMonitorOnly);
     wsPageUtility.SetFieldVisibility("jmcg_skipweekendsandbusinessclosures", typeSelected && !isMonitorOnly);
     wsPageUtility.SetFieldVisibility("jmcg_sendnotificationforschedulefailures", typeSelected && !isMonitorOnly);
+    wsPageUtility.SetFieldVisibility("jmcg_setfieldwhennotificationsent", isViewNotificationEntityTypeEntered);
+    wsPageUtility.SetFieldVisibility("jmcg_setfieldwhennotificationsentselection", isViewNotificationEntityTypeEntered);
 
     wsPageUtility.SetSectionVisibility("secViewNotification", isViewNotification);
     wsPageUtility.SetSectionVisibility("secFetchTarget", isFetchTarget);
@@ -226,5 +233,44 @@ wsWorkflowTasks.SetEntitySelection = function () {
         var selectedEntityName = selectedEntity["LogicalName"];
         wsPageUtility.SetFieldValue("jmcg_viewnotificationentitytype", selectedEntityName);
         wsPageUtility.SetFieldValue("jmcg_viewnotificationentitytypeselectionfield", 0);
+    }
+};
+
+wsWorkflowTasks.SetFieldWhenNotificationSentFields = null;
+wsWorkflowTasks.LoadSetFieldWhenNotificationSentPicklist = function () {
+    var viewEntityType = wsPageUtility.GetFieldValue("jmcg_viewnotificationentitytype");
+    var isViewNotification = wsPageUtility.GetFieldValue("jmcg_workflowexecutiontype") == wsWorkflowTasks.Options.WorkflowExecutionType.ViewNotification;
+    var processResults = function (results) {
+        var newArray = new Array();
+        var validTypes = ["Boolean", "DateTime"];
+        var ignoreFields = ["createdon", "modifiedon", "merged", "isprivate", "overriddencreatedon"];
+        for (var j = 0; j < results.length; j++) {
+            if (wsPageUtility.ArrayContains(validTypes, results[j].FieldType)
+                && !wsPageUtility.ArrayContains(ignoreFields, results[j].LogicalName)) {
+                newArray.push(results[j]);
+            }
+        }
+        wsWorkflowTasks.SetFieldWhenNotificationSentFields = newArray;
+        var fieldOptions = new Array();
+        fieldOptions.push(new wsPageUtility.PicklistOption(0, "Select to change the selected field"));
+        for (var i = 1; i <= wsWorkflowTasks.SetFieldWhenNotificationSentFields.length; i++) {
+            fieldOptions.push(new wsPageUtility.PicklistOption(i, wsWorkflowTasks.SetFieldWhenNotificationSentFields[i - 1]["DisplayName"]));
+        }
+        wsPageUtility.SetPicklistOptions("jmcg_setfieldwhennotificationsentselection", fieldOptions);
+        wsPageUtility.SetFieldValue("jmcg_setfieldwhennotificationsentselection", 0);
+    };
+    if (isViewNotification && viewEntityType != null) {
+        wsServiceUtility.GetFieldMetadata(viewEntityType, processResults);
+    }
+};
+
+wsWorkflowTasks.SetSetFieldSelection = function () {
+    var selectedoption = Xrm.Page.getAttribute("jmcg_setfieldwhennotificationsentselection").getSelectedOption();
+    if (selectedoption != null && parseInt(selectedoption.value) != 0) {
+        var value = selectedoption.value;
+        var selectedField = wsWorkflowTasks.SetFieldWhenNotificationSentFields[parseInt(value) - 1];
+        var selectedFieldName = selectedField["LogicalName"];
+        wsPageUtility.SetFieldValue("jmcg_setfieldwhennotificationsent", selectedFieldName);
+        wsPageUtility.SetFieldValue("jmcg_setfieldwhennotificationsentselection", 0);
     }
 };

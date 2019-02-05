@@ -7,27 +7,106 @@ if (typeof Xrm === 'undefined')
 
 WsServiceUtility = function () {
     var that = this;
-    var EntityMetadata = null;
+    this.EntityMetadata = null;
+    this.FieldMetadata = {};
 
     this.FieldType =
-    {
-        Lookup: "EntityReference",
-        Guid: "guid",
-        Int: "int",
-        Decimal: "decimal",
-        Bool: "boolean",
-        Money: "money",
-        Date: "date",
-        OptionSet: "OptionSetValue",
-        String: "string"
-    };
-    this.FilterOperator =
-    {
-        Equal: "Equal",
-        GreaterThan: "GreaterThan",
-        Null: "Null",
-        NotNull: "NotNull"
+        {
+            Lookup: "EntityReference",
+            Guid: "guid",
+            Int: "int",
+            Decimal: "decimal",
+            Bool: "boolean",
+            Money: "money",
+            Date: "date",
+            OptionSet: "OptionSetValue",
+            String: "string"
         };
+    this.FilterOperator =
+        {
+            Equal: "Equal",
+            GreaterThan: "GreaterThan",
+            Null: "Null",
+            NotNull: "NotNull"
+        };
+
+    function compareDisplayName(a, b) {
+        if (a.DisplayName < b.DisplayName)
+            return -1;
+        if (a.DisplayName > b.DisplayName)
+            return 1;
+        return 0;
+    };
+
+    this.GetFieldMetadata = function (entityType, asyncCallback, onError) {
+        if (that.FieldMetadata[entityType] != null)
+            asyncCallback(that.FieldMetadata[entityType]);
+        else {
+            var xml = "      <request i:type=\"a:RetrieveEntityRequest\" xmlns:a=\"http://schemas.microsoft.com/xrm/2011/Contracts\">";
+            xml = xml + "        <a:Parameters xmlns:b=\"http://schemas.datacontract.org/2004/07/System.Collections.Generic\">";
+            xml = xml + "          <a:KeyValuePairOfstringanyType>";
+            xml = xml + "            <b:key>EntityFilters</b:key>";
+            xml = xml + "            <b:value i:type=\"c:EntityFilters\" xmlns:c=\"http://schemas.microsoft.com/xrm/2011/Metadata\">Attributes</b:value>";
+            xml = xml + "          </a:KeyValuePairOfstringanyType>";
+            xml = xml + "          <a:KeyValuePairOfstringanyType>";
+            xml = xml + "            <b:key>MetadataId</b:key>";
+            xml = xml + "            <b:value i:type=\"c:guid\" xmlns:c=\"http://schemas.microsoft.com/2003/10/Serialization/\">00000000-0000-0000-0000-000000000000</b:value>";
+            xml = xml + "          </a:KeyValuePairOfstringanyType>";
+            xml = xml + "          <a:KeyValuePairOfstringanyType>";
+            xml = xml + "            <b:key>RetrieveAsIfPublished</b:key>";
+            xml = xml + "            <b:value i:type=\"c:boolean\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">false</b:value>";
+            xml = xml + "          </a:KeyValuePairOfstringanyType>";
+            xml = xml + "          <a:KeyValuePairOfstringanyType>";
+            xml = xml + "            <b:key>LogicalName</b:key>";
+            xml = xml + "            <b:value i:type=\"c:string\" xmlns:c=\"http://www.w3.org/2001/XMLSchema\">" + entityType + "</b:value>";
+            xml = xml + "          </a:KeyValuePairOfstringanyType>";
+            xml = xml + "        </a:Parameters>";
+            xml = xml + "        <a:RequestId i:nil=\"true\" />";
+            xml = xml + "        <a:RequestName>RetrieveEntity</a:RequestName>";
+            xml = xml + "      </request>";
+
+            if (asyncCallback != null) {
+                var processResponseData = function (data) {
+                    var results = new Array();
+                    var fieldNodes = XrmElementsByTagName(XrmFind(XrmFind(data, 'Results')[0], 'KeyValuePairOfstringanyType')[0], 'AttributeMetadata');
+                    for (var i = 0; i < fieldNodes.length; i++) {
+
+                        var thisField = new Object();
+                        thisField.LogicalName = null;
+                        var fieldNode = fieldNodes[i];
+                        var logicalNameNode = XrmElementsByTagName(fieldNode, 'LogicalName');
+                        if (logicalNameNode.length > 0)
+                            thisField.LogicalName = XrmInnerText(logicalNameNode[0]);
+                        thisField.DisplayName = thisField.LogicalName;
+                        var labelNode = XrmElementsByTagName(fieldNode, 'displayname');
+                        if (labelNode.length > 0) {
+                            var userLocalised = XrmFind(labelNode[0], "userlocalizedlabel");
+                            if (userLocalised.length > 0) {
+                                var localLabel = XrmFind(userLocalised[0], "label");
+                                if (localLabel.length > 0) {
+                                    thisField.DisplayName = XrmInnerText(localLabel[0]);
+                                }
+                            }
+                        }
+                        thisField.FieldType = null;
+                        var fieldTypeNode = XrmElementsByTagName(fieldNode, 'AttributeType');
+                        if (fieldTypeNode.length > 0)
+                            thisField.FieldType = XrmInnerText(fieldTypeNode[0]);
+                        if (thisField.LogicalName)
+                            results.push(thisField);
+
+                    }
+                    results.sort(compareDisplayName);
+                    that.FieldMetadata[entityType] = results;
+                    asyncCallback(results);
+                };
+                ExecuteRequest(xml, processResponseData, onError);
+
+            } else {
+                return ExecuteRequest(xml, null);
+            }
+        }
+    };
 
     this.GetAllEntityMetadata = function (asyncCallback, onError) {
         if (that.EntityMetadata != null)
@@ -50,7 +129,7 @@ WsServiceUtility = function () {
             executerequestxml = executerequestxml + '</request>';
 
             if (asyncCallback != null) {
-                function processResponseData(data) {
+                var processResponseData = function (data) {
                     var results = new Array();
                     var entityNodes = XrmElementsByTagName(XrmFind(XrmFind(data, 'Results')[0], 'KeyValuePairOfstringanyType')[0], 'EntityMetadata');
                     for (var i = 0; i < entityNodes.length; i++) {
@@ -65,7 +144,7 @@ WsServiceUtility = function () {
                         if (labelNode.length > 0) {
                             var userLocalised = XrmFind(labelNode[0], "userlocalizedlabel");
                             if (userLocalised.length > 0) {
-                                var localLabel = XrmFind(userLocalised[0], "label")
+                                var localLabel = XrmFind(userLocalised[0], "label");
                                 if (localLabel.length > 0) {
                                     thisEntity.DisplayName = XrmInnerText(localLabel[0]);
                                 }
@@ -80,7 +159,7 @@ WsServiceUtility = function () {
                     }
                     that.EntityMetadata = results;
                     asyncCallback(results);
-                }
+                };
                 ExecuteRequest(executerequestxml, processResponseData, onError);
 
             } else {
@@ -88,7 +167,7 @@ WsServiceUtility = function () {
             }
         }
     };
-    
+
     this.RetrieveMultipleAsync = function (entityType, fields, conditions, orders, asyncCallback, onError) {
         /// <summary>Calls Retrieve Multiple Method And Passes And Passes The Results In Array Of this.EntityObject Objects To asyncCallback Method Asynchronously </summary>
         /// <summary>Note Limitied To Maximum Records Returned In One Request By CRM </summary>
@@ -650,7 +729,7 @@ WsServiceUtility = function () {
             && attributeNode.parentNode.attributes.length > 0
             && attributeNode.parentNode.attributes[0].value == "a:OptionSetValue")
             ctype = "OptionSetValue";
-        
+
         if (ctype != null) {
             if (ctype.indexOf("int") != -1)
                 fieldValue = parseInt(fieldText);
@@ -813,7 +892,7 @@ WsServiceUtility = function () {
             } else {
                 var fieldsString = fields + "";
                 var split = fieldsString.split(",");
-                for (var j =0; j < split.length; j++)
+                for (var j = 0; j < split.length; j++)
                     xml += "<c:string>" + split[j] + "</c:string>";
             }
             xml += "</a:Columns>";
@@ -966,6 +1045,6 @@ WsServiceUtility = function () {
     this.GetFormRecordId = function () {
         return Xrm.Page.data.entity.getId();
     };
-}
+};
 
 wsServiceUtility = new WsServiceUtility();

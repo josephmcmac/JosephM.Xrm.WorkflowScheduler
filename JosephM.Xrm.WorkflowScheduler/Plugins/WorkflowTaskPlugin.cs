@@ -58,7 +58,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
                             var query = XrmService.ConvertFetchToQueryExpression(fetch);
                             var targetType = query.EntityName;
                             if (!XrmService.FieldExists(fieldToSet, targetType))
-                                throw new Exception($"The Field Populated In {GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent)} Does Not Exist In The Type {targetType}");
+                                throw new Exception($"The Field {fieldToSet} Which Is Populated In {GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_setfieldwhennotificationsent)} Does Not Exist In The Type {targetType}");
 
                             var validFieldTypes = new[]
                             {
