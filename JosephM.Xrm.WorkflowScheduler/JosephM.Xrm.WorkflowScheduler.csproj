@@ -121,7 +121,10 @@
     <Compile Include="Services\LocalisationService.cs" />
     <Compile Include="Services\LocalisationSettings.cs" />
     <Compile Include="Services\WorkflowSchedulerService.cs" />
+    <Compile Include="Workflows\RescheduleMonitor2.cs" />
+    <Compile Include="Workflows\StartNewMonitorInstance2.cs" />
     <Compile Include="Workflows\StartNewMonitorInstance.cs" />
+    <Compile Include="Workflows\RescheduleMonitor.cs" />
     <Compile Include="Workflows\WorkflowSchedulerWorkflowActivityInstance.cs" />
     <Compile Include="Workflows\StartNewContinuousInstance.cs" />
     <Compile Include="Workflows\WorkflowTaskExecution.cs" />

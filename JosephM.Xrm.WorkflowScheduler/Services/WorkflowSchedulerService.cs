@@ -1,21 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using JosephM.Xrm.WorkflowScheduler.Core;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using Schema;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace JosephM.Xrm.WorkflowScheduler.Services
 {
     public class WorkflowSchedulerService
     {
         private XrmService XrmService { get; set; }
+        public LogController Controller { get; }
 
-        public WorkflowSchedulerService(XrmService xrmService)
+        public WorkflowSchedulerService(XrmService xrmService, LogController controller)
         {
             XrmService = xrmService;
+            Controller = controller ?? new LogController();
         }
 
         public Guid GetContinuousWorkflowProcessId()
@@ -28,19 +29,69 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
             XrmService.StartWorkflow(GetContinuousWorkflowProcessId(), targetId);
         }
 
-        public Guid GetMonitorWorkflowProcessId()
+        public Guid GetMonitorWorkflow1ProcessId()
         {
             return new Guid("5F69D869-0A3C-4DBB-871B-4BED39E20A89");
         }
 
-        public void StartNewMonitorWorkflowFor(Guid targetId)
+        public Guid GetMonitorWorkflow2ProcessId()
         {
-            XrmService.StartWorkflow(GetMonitorWorkflowProcessId(), targetId);
+            return new Guid("4CA9C24B-BE47-4060-88F5-BBE57CA4DEEA");
         }
 
-        public void StopMonitorWorkflowFor(Guid targetId)
+        public int GetMonitorPeriod()
+        {
+            return 2;
+        }
+
+        public void CheckOtherMonitor(Entity workflowTask, int monitorNUmber)
+        {
+            //while we dont want this to fail
+            //if it does we would rather continue this monitor
+            //than fail this one due to an error processing the error
+            //so lets just ignore/supress any errors
+            try
+            {
+                //okay for this check if the other workflow time is earlier than this one
+                var otherMonitorTimeField = monitorNUmber < 2
+                    ? Fields.jmcg_workflowtask_.jmcg_nextmonitortime2
+                    : Fields.jmcg_workflowtask_.jmcg_nextmonitortime;
+                var otherMonitorTime = workflowTask.GetDateTimeField(otherMonitorTimeField);
+                if (!otherMonitorTime.HasValue
+                    || otherMonitorTime.Value < DateTime.UtcNow)
+                {
+                    //in that case lets concel if it exists as seems to have failed
+                    var otherMonitorId = monitorNUmber < 2
+                        ? GetMonitorWorkflow2ProcessId()
+                        : GetMonitorWorkflow1ProcessId();
+                    var instancesToCancel = GetRunningInstances(workflowTask.Id, otherMonitorId);
+                    StopRunningWorkflowInstances(instancesToCancel);
+                    workflowTask.SetField(otherMonitorTimeField, DateTime.UtcNow.AddHours(1));
+                    XrmService.Update(workflowTask, new[] { otherMonitorTimeField });
+                    //and spawn it again
+                    StartNewMonitorWorkflowFor(workflowTask.Id, monitorNUmber < 2 ? 2 : 1);
+                }
+            }
+            catch(Exception ex)
+            {
+                //swallow the error as we dont want to fail this monitor
+                Controller.LogLiteral(string.Format("Error verifying other monitor: {0}", ex.XrmDisplayString()));
+            }
+        }
+
+        public void StartNewMonitorWorkflowFor(Guid targetId, int monitorNumber)
+        {
+            var monitorWorkflowId = monitorNumber < 2
+                ? GetMonitorWorkflow1ProcessId()
+                : GetMonitorWorkflow2ProcessId();
+            XrmService.StartWorkflow(monitorWorkflowId, targetId);
+        }
+
+        public void StopMonitorWorkflowsFor(Guid targetId)
         {
             var instances = GetMonitorInstances(targetId);
+            StopRunningWorkflowInstances(instances);
+            instances = GetMonitor2Instances(targetId);
             StopRunningWorkflowInstances(instances);
         }
 
@@ -75,9 +126,9 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
                 new string[0],
                 new[]
                 {
-                                new ConditionExpression(Fields.asyncoperation_.statuscode, ConditionOperator.Equal,
+                      new ConditionExpression(Fields.asyncoperation_.statuscode, ConditionOperator.Equal,
                                     OptionSets.SystemJob.StatusReason.Failed),
-                                new ConditionExpression(Fields.asyncoperation_.regardingobjectid, ConditionOperator.Equal,
+                      new ConditionExpression(Fields.asyncoperation_.regardingobjectid, ConditionOperator.Equal,
                                     workflowTaskId)
                 }
                 , null);
@@ -89,8 +140,12 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
 
         public IEnumerable<Entity> GetMonitorInstances(Guid targetId)
         {
-            var workflowId = GetMonitorWorkflowProcessId();
-            return GetRunningInstances(targetId, workflowId);
+            return GetRunningInstances(targetId, GetMonitorWorkflow1ProcessId());
+        }
+
+        public IEnumerable<Entity> GetMonitor2Instances(Guid targetId)
+        {
+            return GetRunningInstances(targetId, GetMonitorWorkflow2ProcessId());
         }
 
         public IEnumerable<Entity> GetRecurringInstances(Guid targetId)

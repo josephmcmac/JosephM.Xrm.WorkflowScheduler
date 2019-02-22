@@ -52,6 +52,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.1.2.0", "2.1.2.0", "{9C21
 		Releases\2.1.2.0\JosephMcGregorWorkflowScheduler_2_1_2_0_managed.zip = Releases\2.1.2.0\JosephMcGregorWorkflowScheduler_2_1_2_0_managed.zip
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.2.0.0", "2.2.0.0", "{2E1E3A61-EDDF-42B8-8D3D-235C8029E3E8}"
+	ProjectSection(SolutionItems) = preProject
+		Releases\2.2.0.0\JosephMcGregorWorkflowScheduler_2_2_0_0.zip = Releases\2.2.0.0\JosephMcGregorWorkflowScheduler_2_2_0_0.zip
+		Releases\2.2.0.0\JosephMcGregorWorkflowScheduler_2_2_0_0_managed.zip = Releases\2.2.0.0\JosephMcGregorWorkflowScheduler_2_2_0_0_managed.zip
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,6 +86,7 @@ Global
 		{D1D1B069-17C5-40A7-B8AC-7CF588DBF4EF} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{6FD8DD0B-C28D-4EDA-A443-6FBF2678626C} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{9C21CD52-6242-4AF9-8770-789436963A2C} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
+		{2E1E3A61-EDDF-42B8-8D3D-235C8029E3E8} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55B182AD-5DCA-49E9-859B-2666DB00CC07}

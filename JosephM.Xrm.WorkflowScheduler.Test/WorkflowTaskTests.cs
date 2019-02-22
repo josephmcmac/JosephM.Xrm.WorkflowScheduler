@@ -48,14 +48,14 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             Assert.IsFalse(WorkflowSchedulerService.GetRecurringInstances(workflowTask.Id).Any());
             Assert.IsTrue(WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any());
             //stop the monitor we will start it again in a second
-            WorkflowSchedulerService.StopMonitorWorkflowFor(workflowTask.Id);
 
             //run the workflow which will fail
             var account = CreateAccount();
             XrmService.StartWorkflow(workflowWillFail.Id, account.Id);
             //wait a second and spawn the monitor
             Thread.Sleep(5000);
-            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
             //verify the notification email created
             WaitTillTrue(() => GetRegardingEmails(workflowTask).Any(), 60);
             
@@ -226,19 +226,47 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_sendnotificationfortargetfailures, true);
             workflowTask.SetLookupField(Fields.jmcg_workflowtask_.jmcg_sendfailurenotificationsto, TestQueue);
             workflowTask = CreateAndRetrieve(workflowTask);
+
+            //okay now it is crated lets verify the monitors and values
+            //note monitor 2 doesnt start initially
+            //when the first monitor hits its first execution it will start up the second montior
+            //since it will determine it is not running
             Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_minimumtargetfailuredatetime));
             Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime));
+            Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime));
+            Assert.IsNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2));
 
-            //okay need to set conditions for the target having not executed
             WaitTillTrue(() => WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any(), 60);
+            var monitor2Instance = WorkflowSchedulerService.GetMonitor2Instances(workflowTask.Id);
+            Assert.IsFalse(monitor2Instance.Any());
 
+            //okay lets elapse the first monitor time and verify the first monitor starts the second one
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
+
+            WaitTillTrue(() => WorkflowSchedulerService.GetMonitor2Instances(workflowTask.Id).Any(), 60);
+            workflowTask = Refresh(workflowTask);
+            Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2));
+
+            //okay lets turn the workf.low task off and verify the monitors stop
             workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_on, false);
             workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_on);
             Assert.IsFalse(WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any());
+            Assert.IsFalse(WorkflowSchedulerService.GetMonitor2Instances(workflowTask.Id).Any());
 
+            //okay lets start it up again and verify the first monitors starts
             workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_on, true);
             workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_on);
             Assert.IsTrue(WorkflowSchedulerService.GetMonitorInstances(workflowTask.Id).Any());
+            Assert.IsFalse(WorkflowSchedulerService.GetMonitor2Instances(workflowTask.Id).Any());
+            Assert.IsNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2));
+
+            //then spawns the second one
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
+            WaitTillTrue(() => WorkflowSchedulerService.GetMonitor2Instances(workflowTask.Id).Any(), 60);
+            workflowTask = Refresh(workflowTask);
+            Assert.IsNotNull(workflowTask.GetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2));
         }
 
         /// <summary>
@@ -278,7 +306,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
 
             WaitTillTrue(() => WorkflowSchedulerService.GetRecurringInstancesFailed(workflowTask.Id).Any(), 60);
 
-            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
             WaitTillTrue(() => GetRegardingEmails(workflowTask).Count() == 1, 60);
             WaitTillTrue(() => initialThreshold < Refresh(workflowTask).GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_minimumschedulefailuredatetime), 60);
 
@@ -292,10 +321,13 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             WorkflowSchedulerService.StartNewContinuousWorkflowFor(workflowTask.Id);
             WaitTillTrue(() => WorkflowSchedulerService.GetRecurringInstancesFailed(workflowTask.Id).Count() > 1, 60);
 
-            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            Assert.IsTrue(WorkflowSchedulerService.GetMonitor2Instances(workflowTask.Id).Any());
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime2);
             WaitTillTrue(() => GetRegardingEmails(workflowTask).Count() == 2, 60);
 
-            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
             Thread.Sleep(60000);
             Assert.AreEqual(2, GetRegardingEmails(workflowTask).Count());
 
@@ -342,7 +374,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             var workflow = CreateWorkflowInstance<TargetWorkflowTaskMonitorInstance>(workflowTask);
             WaitTillTrue(() => workflow.HasNewFailure(), 60);
 
-            WorkflowSchedulerService.StartNewMonitorWorkflowFor(workflowTask.Id);
+            workflowTask.SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow);
+            workflowTask = UpdateFieldsAndRetreive(workflowTask, Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
 
             //okay need to set conditions for the target having not executed
             WaitTillTrue(() => GetRegardingEmails(workflowTask).Any(), 60);

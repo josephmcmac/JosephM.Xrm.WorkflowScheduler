@@ -17,7 +17,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
             get
             {
                 if (_workflowSchedulerService == null)
-                    _workflowSchedulerService = new WorkflowSchedulerService(XrmService);
+                    _workflowSchedulerService = new WorkflowSchedulerService(XrmService, LogController);
                 return _workflowSchedulerService;
             }
         }

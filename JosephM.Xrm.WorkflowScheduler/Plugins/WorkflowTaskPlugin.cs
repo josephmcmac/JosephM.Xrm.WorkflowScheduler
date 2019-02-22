@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using JosephM.Xrm.WorkflowScheduler.Core;
+﻿using JosephM.Xrm.WorkflowScheduler.Core;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using Schema;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace JosephM.Xrm.WorkflowScheduler.Plugins
 {
@@ -259,16 +257,25 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
 
         private void SpawnMonitorInstance()
         {
+            if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PreOperationEvent) &&
+                    IsMode(PluginMode.Synchronous))
+            {
+                if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_on))
+                {
+                    SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow.AddMinutes(5));
+                    SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2, null);
+                }
+            }
             if (IsMessage(PluginMessage.Create, PluginMessage.Update) && IsStage(PluginStage.PostEvent) &&
                 IsMode(PluginMode.Synchronous))
             {
                 if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_on))
                 {
-                    WorkflowSchedulerService.StartNewMonitorWorkflowFor(TargetId);
+                    WorkflowSchedulerService.StartNewMonitorWorkflowFor(TargetId, 1);
                 }
                 if (BooleanChangingToFalse(Fields.jmcg_workflowtask_.jmcg_on))
                 {
-                    WorkflowSchedulerService.StopMonitorWorkflowFor(TargetId);
+                    WorkflowSchedulerService.StopMonitorWorkflowsFor(TargetId);
                 }
             }
         }

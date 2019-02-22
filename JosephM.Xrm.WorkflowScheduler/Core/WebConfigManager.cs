@@ -29,7 +29,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Core
                         var rawConfigString = section[property.Name];
                         SetFromRawString(property, configObject, rawConfigString);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         throw;
                     }

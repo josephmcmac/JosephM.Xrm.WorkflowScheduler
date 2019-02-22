@@ -1,13 +1,4 @@
-﻿using System;
-using System.Activities;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Xrm.Sdk.Workflow;
-using Schema;
-
-namespace JosephM.Xrm.WorkflowScheduler.Workflows
+﻿namespace JosephM.Xrm.WorkflowScheduler.Workflows
 {
     public class StartNewMonitorInstance : XrmWorkflowActivityRegistration
     {
@@ -27,7 +18,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
 
         private void DoIt()
         {
-            WorkflowSchedulerService.StartNewMonitorWorkflowFor(TargetId);
+            WorkflowSchedulerService.StartNewMonitorWorkflowFor(TargetId, 1);
         }
     }
 }
