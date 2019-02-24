@@ -62,7 +62,8 @@ wsWorkflowTasks.RunOnSave = function () {
 
 wsWorkflowTasks.ActiveHours = function () {
     var limitHours = wsPageUtility.GetFieldValue("jmcg_onlyrunbetweenhours");
-    wsPageUtility.SetTabVisibility("tabActiveHours", limitHours);
+    wsPageUtility.SetSectionVisibility("secActiveStart", limitHours);
+    wsPageUtility.SetSectionVisibility("secActiveEnd", limitHours);
 };
 
 wsWorkflowTasks.RefreshVisibility = function () {

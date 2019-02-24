@@ -262,7 +262,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Plugins
             {
                 if (BooleanChangingToTrue(Fields.jmcg_workflowtask_.jmcg_on))
                 {
-                    SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, DateTime.UtcNow.AddMinutes(5));
+                    var nextRunTime = GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextexecutiontime) ?? DateTime.UtcNow;
+                    if (nextRunTime < DateTime.UtcNow)
+                        nextRunTime = DateTime.UtcNow;
+                    var nextMonitorTime = nextRunTime.AddMinutes(new Random().Next(3, 9));
+                    SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime, nextMonitorTime);
                     SetField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2, null);
                 }
             }

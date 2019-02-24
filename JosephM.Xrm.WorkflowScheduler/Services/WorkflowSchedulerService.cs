@@ -41,7 +41,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Services
 
         public int GetMonitorPeriod()
         {
-            return 2;
+            return 1;
         }
 
         public void CheckOtherMonitor(Entity workflowTask, int monitorNUmber)

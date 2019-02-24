@@ -29,11 +29,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
         {
             WorkflowSchedulerService.CheckOtherMonitor(Target, 1);
             //calculate and return the next execution time
-            var thisMonitorTime = Target.GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime);
-            if (!thisMonitorTime.HasValue)
-                thisMonitorTime = DateTime.UtcNow;
-            var nextMonitorTime = thisMonitorTime.Value.AddHours(WorkflowSchedulerService.GetMonitorPeriod());
-            return nextMonitorTime;
+            var otherMonitorTime = Target.GetDateTimeField(Fields.jmcg_workflowtask_.jmcg_nextmonitortime2);
+            if (!otherMonitorTime.HasValue || otherMonitorTime < DateTime.UtcNow)
+                otherMonitorTime = DateTime.UtcNow.AddHours(WorkflowSchedulerService.GetMonitorPeriod());
+            return otherMonitorTime.Value.AddHours(WorkflowSchedulerService.GetMonitorPeriod());
         }
     }
 }
