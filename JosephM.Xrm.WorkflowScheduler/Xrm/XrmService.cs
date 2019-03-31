@@ -2841,6 +2841,8 @@ namespace JosephM.Xrm.WorkflowScheduler
             }
             else if (IsActivityParty(fieldName, recordType))
             {
+                if (value is EntityCollection erValue)
+                    value = erValue.Entities.ToArray();
                 if (value is Entity[])
                 {
                     var namesToOutput = new List<string>();
