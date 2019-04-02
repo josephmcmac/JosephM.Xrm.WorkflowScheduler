@@ -3671,6 +3671,7 @@ namespace Schema
 			public const string createdonbehalfby = "createdonbehalfby";
 			public const string importsequencenumber = "importsequencenumber";
 			public const string jmcg_crminstanceurl = "jmcg_crminstanceurl";
+			public const string jmcg_jmcg_appid = "jmcg_jmcg_appid";
 			public const string jmcg_name = "jmcg_name";
 			public const string jmcg_wstestsettingsid = "jmcg_wstestsettingsid";
 			public const string modifiedby = "modifiedby";

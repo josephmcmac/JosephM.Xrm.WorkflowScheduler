@@ -14,6 +14,44 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
         /// Verifies continuous workflow not started, started or killed for change of On value
         /// </summary>
         [TestMethod]
+        public void WorkflowTaskExecutionGetAppIdForEmailLinksTests()
+        {
+            var team = GetTestTeam();
+            Assert.IsNotNull(team.GetStringField(Fields.team_.jmcg_appid));
+            var testTeamsQueue = team.GetLookupGuid(Fields.team_.queueid);
+            Assert.IsTrue(testTeamsQueue.HasValue);
+
+            var workflow = InitialiseValidWorkflowTask();
+
+            var testGuid = Guid.NewGuid();
+            workflow.SetField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid, testGuid.ToString());
+            workflow = CreateAndRetrieve(workflow);
+
+            var workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflow);
+            Assert.AreEqual(testGuid.ToString(), workflowInstance.GetAppIdForTarget(team.LogicalName, team.Id));
+
+            var testSettings = GetTestSettings();
+            Assert.IsNotNull(testSettings.GetStringField(Fields.jmcg_wstestsettings_.jmcg_jmcg_appid));
+
+            workflow.SetField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid, Entities.jmcg_wstestsettings + "." + Fields.jmcg_wstestsettings_.jmcg_jmcg_appid);
+            workflow = UpdateFieldsAndRetreive(workflow, Fields.jmcg_workflowtask_.jmcg_fieldforteamappid);
+
+            workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflow);
+            Assert.AreEqual(testSettings.GetStringField(Fields.jmcg_wstestsettings_.jmcg_jmcg_appid), workflowInstance.GetAppIdForTarget(team.LogicalName, team.Id));
+
+
+
+            workflow.SetField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid, Fields.team_.jmcg_appid);
+            workflow = UpdateFieldsAndRetreive(workflow, Fields.jmcg_workflowtask_.jmcg_fieldforteamappid);
+
+            workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>(workflow);
+            Assert.AreEqual(team.GetStringField(Fields.team_.jmcg_appid), workflowInstance.GetAppIdForTarget(Entities.queue, testTeamsQueue.Value));
+        }
+
+        /// <summary>
+        /// Verifies continuous workflow not started, started or killed for change of On value
+        /// </summary>
+        [TestMethod]
         public void WorkflowTaskExecutionCalculateNextExecutionTimeTests()
         {
             Entity calendar = DeleteAllBusinessClosures();

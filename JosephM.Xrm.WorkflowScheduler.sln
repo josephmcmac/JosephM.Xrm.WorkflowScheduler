@@ -12,7 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Customisations", "Customisations", "{01B5E26A-C17E-47BC-BFB4-B8B793DDE963}"
 	ProjectSection(SolutionItems) = preProject
 		Customisations\Customisations.xlsx = Customisations\Customisations.xlsx
-		Customisations\TestComponents_2_1_0_0.zip = Customisations\TestComponents_2_1_0_0.zip
+		Customisations\TestComponents_2_2_1_0.zip = Customisations\TestComponents_2_2_1_0.zip
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Releases", "Releases", "{9E705EBF-60CB-48E3-AA77-BE5432708896}"
@@ -58,6 +58,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.2.0.0", "2.2.0.0", "{2E1E
 		Releases\2.2.0.0\JosephMcGregorWorkflowScheduler_2_2_0_0_managed.zip = Releases\2.2.0.0\JosephMcGregorWorkflowScheduler_2_2_0_0_managed.zip
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.2.1.0", "2.2.1.0", "{1D2315C8-6179-49B4-826B-44D43C2999CA}"
+	ProjectSection(SolutionItems) = preProject
+		Releases\2.2.1.0\JosephMcGregorWorkflowScheduler_2_2_1_0.zip = Releases\2.2.1.0\JosephMcGregorWorkflowScheduler_2_2_1_0.zip
+		Releases\2.2.1.0\JosephMcGregorWorkflowScheduler_2_2_1_0_managed.zip = Releases\2.2.1.0\JosephMcGregorWorkflowScheduler_2_2_1_0_managed.zip
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +93,7 @@ Global
 		{6FD8DD0B-C28D-4EDA-A443-6FBF2678626C} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{9C21CD52-6242-4AF9-8770-789436963A2C} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{2E1E3A61-EDDF-42B8-8D3D-235C8029E3E8} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
+		{1D2315C8-6179-49B4-826B-44D43C2999CA} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55B182AD-5DCA-49E9-859B-2666DB00CC07}

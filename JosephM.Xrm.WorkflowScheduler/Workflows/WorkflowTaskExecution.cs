@@ -274,20 +274,18 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 var fieldsForTable = GetViewLayoutcellFieldNames()
                     .Except(new[] { XrmService.GetPrimaryKeyField(recordsToList.First().LogicalName) })
                     .ToList();
-                if(isToOwner && fieldsForTable.Contains("ownerid"))
+                if (isToOwner && fieldsForTable.Contains("ownerid"))
                 {
                     fieldsForTable.Remove("ownerid");
                 }
 
-                var appId = recipientType == Entities.systemuser
-                    ? WorkflowSchedulerService.GetUserAppId(recipientId, Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid))
-                    : WorkflowSchedulerService.GetQueueAppId(recipientId, Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid));
+                string appId = GetAppIdForTarget(recipientType, recipientId);
                 var email = new HtmlEmailGenerator(XrmService, crmUrl, appId);
                 email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
                     , isToOwner ? "that you own" : "there are"
                     , View.GetStringField(Fields.savedquery_.name)));
                 var notes = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_emailnotes);
-                if(!string.IsNullOrWhiteSpace(notes))
+                if (!string.IsNullOrWhiteSpace(notes))
                 {
                     email.AppendParagraph(notes.Replace("\n", "<br />"));
                 }
@@ -296,6 +294,29 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                 var subject = viewName + " Notification";
                 SendNotificationEmail(recipientType, recipientId, subject, email.GetContent());
             }
+        }
+
+        public string GetAppIdForTarget(string recipientType, Guid recipientId)
+        {
+            var appId = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid);
+            if (appId != null)
+            {
+                if (!Guid.TryParse(appId, out Guid foo))
+                {
+                    if (appId.Contains("."))
+                    {
+                        var splitAppId = appId.Split('.');
+                        appId = XrmService.GetFirst(splitAppId[0], new[] { splitAppId[1] }).GetStringField(splitAppId[1]);
+                    }
+                    else
+                        appId = recipientType == Entities.systemuser
+                            ? WorkflowSchedulerService.GetUserAppId(recipientId, appId)
+                            : WorkflowSchedulerService.GetQueueAppId(recipientId, Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_fieldforteamappid));
+                }
+
+            }
+
+            return appId;
         }
 
         public IEnumerable<string> GetViewLayoutcellFieldNames()

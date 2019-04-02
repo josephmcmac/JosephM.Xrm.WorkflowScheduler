@@ -99,10 +99,11 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             var settings = XrmService.GetFirst("jmcg_wstestsettings");
             if (settings == null)
             {
-                settings = new Entity("jmcg_wstestsettings");
+                settings = new Entity(Entities.jmcg_wstestsettings);
                 var connection = new XrmConnection(XrmConfiguration);
-                settings.SetField("jmcg_name", "Test Workflow Settings");
-                settings.SetField("jmcg_crminstanceurl", connection.GetWebUrl());
+                settings.SetField(Fields.jmcg_wstestsettings_.jmcg_name, "Test Workflow Settings");
+                settings.SetField(Fields.jmcg_wstestsettings_.jmcg_crminstanceurl, connection.GetWebUrl());
+                settings.SetField(Fields.jmcg_wstestsettings_.jmcg_jmcg_appid, Guid.NewGuid().ToString());
                 settings = CreateAndRetrieve(settings);
             }
             return settings;
@@ -136,6 +137,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             {
                 team = new Entity(Entities.team);
                 team.SetField(Fields.team_.name, "TESTTEAM");
+                team.SetField(Fields.team_.jmcg_appid, Guid.NewGuid().ToString());
                 team.SetLookupField(Fields.team_.businessunitid, XrmService.GetFirst(Entities.businessunit));
                 team = CreateAndRetrieve(team);
             }
