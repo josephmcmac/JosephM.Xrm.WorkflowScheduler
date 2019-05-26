@@ -376,6 +376,10 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         throw new Exception(string.Format("Error there is no logic implemented for the {0} with option value of {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit, Entities.jmcg_workflowtask), periodAmount));
                     }
             }
+            //remove seconds part
+            executionTime = executionTime - new TimeSpan(0, 0, 0, executionTime.Second, executionTime.Millisecond);
+
+            //if calculated as earlier than now run again on now
             if (executionTime <= DateTime.UtcNow)
                 executionTime = CalculateNextExecutionTime(DateTime.UtcNow, periodUnit, periodAmount, skipWeekendsAndClosures, limitHours, startTime, endTime);
 

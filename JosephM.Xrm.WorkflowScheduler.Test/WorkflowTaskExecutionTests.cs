@@ -4,6 +4,7 @@ using Microsoft.Xrm.Sdk;
 using Schema;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace JosephM.Xrm.WorkflowScheduler.Test
 {
@@ -98,7 +99,30 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             var oneHourTenMinutesAgo = timeOfDay.Add(new TimeSpan(0, -1, -10, 0, 0));
             var expected = DateTime.Today.AddDays(1).Add(oneHourTenMinutesAgo).ToUniversalTime();
             Assert.AreEqual(expected, workflowInstance.CalculateNextExecutionTime(DateTime.UtcNow, OptionSets.WorkflowTask.PeriodPerRunUnit.Hours, 1, false, true, oneHourTenMinutesAgo, tenMinutesAgo));
+        }
 
+        /// <summary>
+        /// Verifies continuous workflow not started, started or killed for change of On value
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskExecutionCalculateNextExecutionTimeRemovesSecondsTests()
+        {
+            var utcNow = DateTime.UtcNow;
+            while(utcNow.Second == 0)
+            {
+                Thread.Sleep(1000);
+                utcNow = DateTime.UtcNow;
+            }
+
+            var workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>();
+            workflowInstance.CurrentUserId = CurrentUserId;
+
+            var next = workflowInstance.CalculateNextExecutionTime(utcNow, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null);
+
+            var nextSecondsPart = next.Second;
+            var nextMilliSecondsPart = next.Millisecond;
+            Assert.AreEqual(0, nextSecondsPart);
+            Assert.AreEqual(0, nextMilliSecondsPart);
         }
 
         private Entity CreateBusinessClosure(Entity calendar, DateTime holidayDate)
