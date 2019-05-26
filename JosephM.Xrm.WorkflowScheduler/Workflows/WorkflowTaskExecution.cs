@@ -376,6 +376,20 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
                         throw new Exception(string.Format("Error there is no logic implemented for the {0} with option value of {1}", XrmService.GetFieldLabel(Fields.jmcg_workflowtask_.jmcg_periodperrununit, Entities.jmcg_workflowtask), periodAmount));
                     }
             }
+            //if daylight saving caused the hour of day to change
+            //adjust the hour appropriatelly where applicable
+            if (periodUnit != OptionSets.WorkflowTask.PeriodPerRunUnit.Minutes
+                && periodUnit != OptionSets.WorkflowTask.PeriodPerRunUnit.Hours)
+            {
+                var tempPreviousLocal = ConvertToUserLocal(thisExecutionTime);
+                var tempNextLocal = ConvertToUserLocal(executionTime);
+
+                if (tempPreviousLocal.Hour != tempNextLocal.Hour)
+                {
+                    executionTime = executionTime.AddHours(tempPreviousLocal.Hour - tempNextLocal.Hour);
+                }
+            }
+
             //remove seconds part
             executionTime = executionTime - new TimeSpan(0, 0, 0, executionTime.Second, executionTime.Millisecond);
 

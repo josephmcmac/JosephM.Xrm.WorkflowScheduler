@@ -59,8 +59,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
 
             //first verify a tuesday holiday is skipped after a monday execution
 
-            //move to a future monday
             var today = DateTime.Today.AddDays(2);
+            //move to a future monday
             var executionTime = new DateTime(today.Year, today.Month, today.Day, 0, 0, 0, DateTimeKind.Utc); ;
             while (executionTime.DayOfWeek != DayOfWeek.Monday)
                 executionTime = executionTime.AddDays(1);
@@ -95,6 +95,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             //okay lets check the limited business hours
             calendar = DeleteAllBusinessClosures();
             var timeOfDay = DateTime.Now.TimeOfDay;
+            timeOfDay = timeOfDay - new TimeSpan(0, 0, 0, timeOfDay.Seconds, timeOfDay.Milliseconds);
             var tenMinutesAgo = timeOfDay.Add(new TimeSpan(0, 0, -10, 0, 0));
             var oneHourTenMinutesAgo = timeOfDay.Add(new TimeSpan(0, -1, -10, 0, 0));
             var expected = DateTime.Today.AddDays(1).Add(oneHourTenMinutesAgo).ToUniversalTime();
@@ -102,7 +103,37 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
         }
 
         /// <summary>
-        /// Verifies continuous workflow not started, started or killed for change of On value
+        /// Verifies execution time of day remains the same as daylight saving is applied on local time
+        /// </summary>
+        [TestMethod]
+        public void WorkflowTaskExecutionCalculateNextExecutionTimeThroughDaylightSavingsTests()
+        {
+            var timeOfDay = 14;
+            var dayBeforeDaylightSavingsChangeUtc = new DateTime(2019, 10, 5, timeOfDay, 0, 0).ToUniversalTime();
+
+            var workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>();
+            workflowInstance.CurrentUserId = CurrentUserId;
+
+            var next = workflowInstance.CalculateNextExecutionTime(dayBeforeDaylightSavingsChangeUtc, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null);
+            Assert.AreEqual(timeOfDay, next.ToLocalTime().Hour);
+
+            next = workflowInstance.CalculateNextExecutionTime(next, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null);
+            Assert.AreEqual(timeOfDay, next.ToLocalTime().Hour);
+
+            dayBeforeDaylightSavingsChangeUtc = new DateTime(2020, 4, 4, timeOfDay, 0, 0).ToUniversalTime();
+
+            workflowInstance = CreateWorkflowInstance<WorkflowTaskExecutionInstance>();
+            workflowInstance.CurrentUserId = CurrentUserId;
+
+            next = workflowInstance.CalculateNextExecutionTime(dayBeforeDaylightSavingsChangeUtc, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null);
+            Assert.AreEqual(timeOfDay, next.ToLocalTime().Hour);
+
+            next = workflowInstance.CalculateNextExecutionTime(next, OptionSets.WorkflowTask.PeriodPerRunUnit.Days, 1, true, false, null, null);
+            Assert.AreEqual(timeOfDay, next.ToLocalTime().Hour);
+        }
+
+        /// <summary>
+        /// Verifies seconds and milliseconds removed out of next execution time
         /// </summary>
         [TestMethod]
         public void WorkflowTaskExecutionCalculateNextExecutionTimeRemovesSecondsTests()

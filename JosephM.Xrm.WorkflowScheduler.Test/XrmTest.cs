@@ -666,6 +666,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Test
             var instance = new T();
             instance.XrmService = XrmService;
             instance.LogController = Controller;
+            instance.CurrentUserId = CurrentUserId;
             if (target != null)
             {
                 instance.TargetId = target.Id;
