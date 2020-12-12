@@ -1,0 +1,43 @@
+{
+  "AddToSolution": true,
+  "Connections": [
+    {
+      "AuthenticationProviderType": 1,
+      "DiscoveryServiceAddress": "http:\/\/qa2012\/XRMServices\/2011\/Discovery.svc",
+      "Domain": "auqa2012",
+      "Name": "VM Workflow Scheduler",
+      "OrganizationUniqueName": "WorkflowScheduler",
+      "Password": {
+        "_password": "AQAAANCMnd8BFdERjHoAwE\/Cl+sBAAAAWUp\/SzF7pkm9FPTjzSG48gAAAAACAAAAAAAQZgAAAAEAACAAAABq9P0LJTxEU\/H6jYGXwEF6uC19OYt4p\/rHgIUl3\/fKVQAAAAAOgAAAAAIAACAAAAD+LgLtRRs3OKIsqKAH4Hph5EPpz6\/Nd03rQHCVR4m19SAAAACU3vog\/RZoIJb+feaBiU119GLk\/UOBagHZpfTOcnEbpUAAAADjxlJ2\/0TqRkxw1KzNL4lV02gNJ0bxOSjrXWHrQCYxEiKUJmQhYje+fGzAGzyIvnKxqKBP65XDpVg7bXVyWAzI",
+        "<EncryptPassword>k__BackingField": true
+      },
+      "ToolingConnectionId": null,
+      "UseXrmToolingConnector": false,
+      "Username": "joseph",
+      "Active": true,
+      "HideActive": false
+    }
+  ],
+  "DeployIntoFieldProjects": [
+    {
+      "ProjectName": "N\/A"
+    }
+  ],
+  "PluginProjects": [
+    {
+      "ProjectName": "JosephM.Xrm.WorkflowScheduler"
+    }
+  ],
+  "Solution": {
+    "Id": "be8ea01e-1d3f-e511-80d0-000c29634d55",
+    "Name": "JosephMcGregorWorkflowScheduler",
+    "RecordType": "solution"
+  },
+  "SolutionDynamicsCrmPrefix": "jmcg",
+  "SolutionObjectPrefix": "JosephM",
+  "WebResourceProjects": [
+    {
+      "ProjectName": "JosephM.Xrm.WorkflowScheduler.WebResources"
+    }
+  ]
+}

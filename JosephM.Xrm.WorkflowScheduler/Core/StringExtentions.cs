@@ -1,17 +1,26 @@
-﻿#region
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-#endregion
-
 namespace JosephM.Xrm.WorkflowScheduler.Core
 {
     public static class StringExtentions
     {
+        public static string ReplaceStringNewLinesWithHtmlLineBreaks(this string clrString)
+        {
+            if(clrString == null)
+            {
+                return clrString;
+            }
+            clrString = clrString.Replace("\r\n", "<br />");
+            clrString = clrString.Replace("\n", "<br />");
+            clrString = clrString.Replace("\r", "<br />");
+            clrString = clrString.Replace("<br />", "<br />" + Environment.NewLine);
+            return clrString;
+        }
+
         public static T ParseEnum<T>(this string enumString)
         {
             return (T)Enum.Parse(typeof(T), enumString);

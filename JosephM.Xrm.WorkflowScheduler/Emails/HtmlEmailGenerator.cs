@@ -19,8 +19,8 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
         }
         private StringBuilder _content = new StringBuilder();
         private const string pStyle = "style='font-family: Segoe UI;font-size: 13px;color: #444444;'";
-        private const string thStyle = "style='font-family: Segoe UI;font-size: 13px;color: #444444;vertical-align: top;text-align: left; margin: 5px; border-style: solid; border-width: 1px; padding: 5px;'";
-        private const string tdStyle = "style='font-family: Segoe UI;font-size: 13px;color: #444444;vertical-align: top;text-align: left; margin: 5px; border-style: solid; border-width: 1px; padding: 5px;'";
+        private const string thStyle = "style='font-family: Segoe UI;font-size: 13px;color: #444444;vertical-align: top;text-align: left; border-style: solid; border-width: 1px; padding: 5px;'";
+        private const string tdStyle = "style='font-family: Segoe UI;font-size: 13px;color: #444444;vertical-align: top;text-align: left; border-style: solid; border-width: 1px; padding: 5px;'";
         private const string aStyle = "style='font-family: Segoe UI;font-size: 13px;'";
 
         public HtmlEmailGenerator(XrmService xrmService, string webUrl, string appendAppIdToUrls)
@@ -52,7 +52,7 @@ namespace JosephM.Xrm.WorkflowScheduler.Emails
                 return;
 
             var table = new StringBuilder();
-            table.AppendLine("<table>");
+            table.AppendLine("<table style=\"border-collapse: collapse\">");
             table.AppendLine("<thead><tr>");
             if (IncludeHyperlinks && !noHyperLinks)
             {

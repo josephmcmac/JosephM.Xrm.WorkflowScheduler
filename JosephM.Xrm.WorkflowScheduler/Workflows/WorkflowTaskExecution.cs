@@ -281,17 +281,18 @@ namespace JosephM.Xrm.WorkflowScheduler.Workflows
 
                 string appId = GetAppIdForTarget(recipientType, recipientId);
                 var email = new HtmlEmailGenerator(XrmService, crmUrl, appId);
-                email.AppendParagraph(string.Format("This is an automated notification {0} {1}"
-                    , isToOwner ? "that you own" : "there are"
-                    , View.GetStringField(Fields.savedquery_.name)));
-                var notes = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_emailnotes);
-                if (!string.IsNullOrWhiteSpace(notes))
+                var prefaceContent = Target.GetStringField(Fields.jmcg_workflowtask_.jmcg_emailnotes);
+                if(prefaceContent == null)
                 {
-                    email.AppendParagraph(notes.Replace("\n", "<br />"));
+                    prefaceContent = string.Format("This is an automated notification {0} {1}"
+                    , isToOwner ? "that you own" : "there are"
+                    , View.GetStringField(Fields.savedquery_.name));
                 }
+                email.AppendParagraph(prefaceContent.ReplaceStringNewLinesWithHtmlLineBreaks());
+
                 email.AppendTable(recordsToList, localisationService, fields: fieldsForTable, aliasTypeMaps: aliasTypeMaps);
                 var viewName = View.GetStringField(Fields.savedquery_.name);
-                var subject = viewName + " Notification";
+                var subject = viewName;
                 SendNotificationEmail(recipientType, recipientId, subject, email.GetContent());
             }
         }

@@ -1,0 +1,46 @@
+[
+  {
+    "Key": "Active",
+    "Value": "True"
+  },
+  {
+    "Key": "Name",
+    "Value": "VM Workflow Scheduler"
+  },
+  {
+    "Key": "UseXrmToolingConnector",
+    "Value": "False"
+  },
+  {
+    "Key": "AuthenticationProviderType",
+    "Value": "ActiveDirectory"
+  },
+  {
+    "Key": "DiscoveryServiceAddress",
+    "Value": "http:\/\/qa2012\/XRMServices\/2011\/Discovery.svc"
+  },
+  {
+    "Key": "Domain",
+    "Value": "auqa2012"
+  },
+  {
+    "Key": "Username",
+    "Value": "joseph"
+  },
+  {
+    "Key": "Password",
+    "Value": "AQAAANCMnd8BFdERjHoAwE\/Cl+sBAAAAWUp\/SzF7pkm9FPTjzSG48gAAAAACAAAAAAAQZgAAAAEAACAAAABq9P0LJTxEU\/H6jYGXwEF6uC19OYt4p\/rHgIUl3\/fKVQAAAAAOgAAAAAIAACAAAAD+LgLtRRs3OKIsqKAH4Hph5EPpz6\/Nd03rQHCVR4m19SAAAACU3vog\/RZoIJb+feaBiU119GLk\/UOBagHZpfTOcnEbpUAAAADjxlJ2\/0TqRkxw1KzNL4lV02gNJ0bxOSjrXWHrQCYxEiKUJmQhYje+fGzAGzyIvnKxqKBP65XDpVg7bXVyWAzI"
+  },
+  {
+    "Key": "OrganizationUniqueName",
+    "Value": "WorkflowScheduler"
+  },
+  {
+    "Key": "HideActive",
+    "Value": "False"
+  },
+  {
+    "Key": "ToolingConnectionId",
+    "Value": null
+  }
+]

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JosephM.Xrm.WorkflowScheduler", "JosephM.Xrm.WorkflowScheduler\JosephM.Xrm.WorkflowScheduler.csproj", "{C1680534-FA12-4C76-A7A4-4F1843D7DCC2}"
 EndProject
@@ -42,6 +42,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.1.0.0", "2.1.0.0", "{6FD8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Xrm.Vsix", "Xrm.Vsix", "{1C81FF2D-5ECE-4636-AA00-85C573173C28}"
 	ProjectSection(SolutionItems) = preProject
+		Xrm.Vsix\josep.solution.xrmconnection = Xrm.Vsix\josep.solution.xrmconnection
+		Xrm.Vsix\josep.xrmpackage.xrmsettings = Xrm.Vsix\josep.xrmpackage.xrmsettings
 		Xrm.Vsix\joseph.mcgregor-macd.solution.xrmconnection = Xrm.Vsix\joseph.mcgregor-macd.solution.xrmconnection
 		Xrm.Vsix\joseph.mcgregor-macd.xrmpackage.xrmsettings = Xrm.Vsix\joseph.mcgregor-macd.xrmpackage.xrmsettings
 	EndProjectSection
@@ -68,6 +70,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.2.2.0", "2.2.2.0", "{620F
 	ProjectSection(SolutionItems) = preProject
 		Releases\2.2.2.0\JosephMcGregorWorkflowScheduler_2_2_2_0.zip = Releases\2.2.2.0\JosephMcGregorWorkflowScheduler_2_2_2_0.zip
 		Releases\2.2.2.0\JosephMcGregorWorkflowScheduler_2_2_2_0_managed.zip = Releases\2.2.2.0\JosephMcGregorWorkflowScheduler_2_2_2_0_managed.zip
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.2.3.0", "2.2.3.0", "{EEB7107D-1829-4405-9DCE-AC0C7E38408D}"
+	ProjectSection(SolutionItems) = preProject
+		Releases\2.2.3.0\JosephMcGregorWorkflowScheduler_2_2_3_0.zip = Releases\2.2.3.0\JosephMcGregorWorkflowScheduler_2_2_3_0.zip
+		Releases\2.2.3.0\JosephMcGregorWorkflowScheduler_2_2_3_0_managed.zip = Releases\2.2.3.0\JosephMcGregorWorkflowScheduler_2_2_3_0_managed.zip
 	EndProjectSection
 EndProject
 Global
@@ -101,6 +109,7 @@ Global
 		{2E1E3A61-EDDF-42B8-8D3D-235C8029E3E8} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{1D2315C8-6179-49B4-826B-44D43C2999CA} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 		{620FC335-B359-4505-9BE2-C712A3E7A424} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
+		{EEB7107D-1829-4405-9DCE-AC0C7E38408D} = {9E705EBF-60CB-48E3-AA77-BE5432708896}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {55B182AD-5DCA-49E9-859B-2666DB00CC07}
